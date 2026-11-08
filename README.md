@@ -31,6 +31,13 @@ Uygurca ve sağdan sola (RTL) yazılar için Android belge okuyucu. Çekirdeği 
 - **Kitaplar (EPUB, Word vb.):** Yatay ekranda iki sütun gösterilir. Metin ayarlarından seçilir: "Yan çevirince", "Her zaman" veya "Hiçbir zaman".
   - Sağdan sola kitaplarda metin sağ sütunda başlar.
 
+## Tablet görünümü
+Ekran genişliği 600dp'yi geçince (tabletler, katlanabilir telefonlar) uygulama telefondan farklı görünür:
+- **Ana ekran:** Gezinme çubuğu yanda durur. Belgeler kapak resimli bir ızgarada gösterilir: PDF'lerde ilk sayfa, EPUB/FB2/CBZ'de kitabın kendi kapağı.
+- **Okuyucu:** Sayfa küçük resimleri, içindekiler ve notlar belgenin yanında sabit bir panelde açık kalır. PDF'lerde panel üç sekmeli, kitaplarda iki sekmelidir.
+- **Kitap metni:** Satırlar rahat okunur bir genişlikte, ortalanmış olarak gösterilir.
+- **Uygurca ve Arapça arayüz:** Gezinme çubuğu ve panel otomatik olarak sağ tarafa geçer.
+
 ## Dil ve yön
 - **Arayüz:** Dil Ayarlar'dan seçilir (Sistem, ئۇيغۇرچە, Türkçe, English, العربية). Uygurca ve Arapça seçilince arayüz otomatik olarak sağdan sola, diğer dillerde soldan sağa olur.
 - **Belge içeriği:** Arayüz dilinden bağımsızdır, yönü belgenin kendi diline göre otomatik belirlenir. Örneğin Türkçe arayüzde açılan Uygurca kitap sağdan sola gösterilir.

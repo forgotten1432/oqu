@@ -47,6 +47,7 @@ import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
@@ -263,6 +264,12 @@ private fun PdfReader(s: PdfSession, password: String?, onClose: () -> Unit, onR
     var annotations by remember { mutableStateOf(Core.library.annotations(s.entry.id)) }
     fun reloadAnn() { annotations = Core.library.annotations(s.entry.id) }
     val edit = remember { EditState() }
+    val wide = isWideScreen()
+    // Tablets keep contents / pages / notes in a side panel instead of sheets
+    var panel by rememberSaveable { mutableStateOf<String?>(if (wide) "thumbs" else null) }
+    fun openPanel(which: String) {
+        if (wide) panel = if (panel == which) null else which else sheet = which
+    }
     var saving by remember { mutableStateOf(false) }
     var textDialog by remember { mutableStateOf(false) }
     var signDialog by remember { mutableStateOf(false) }
@@ -454,7 +461,14 @@ private fun PdfReader(s: PdfSession, password: String?, onClose: () -> Unit, onR
     )
 
     Box(Modifier.fillMaxSize().background(if (night) Color(0xFF111111) else Color(0xFFE6E6E8))) {
-        CompositionLocalProvider(LocalEdit provides edit) { Column(Modifier.fillMaxSize()) {
+        CompositionLocalProvider(LocalEdit provides edit) { Row(Modifier.fillMaxSize()) {
+            if (wide && panel != null && !readingMode) {
+                PdfSidePanel(
+                    s, panel!!, onPanel = { panel = it }, current = currentPage, night = night, annotations = annotations,
+                    onJump = ::jump, onDeleteAnn = { Core.library.removeAnnotation(it.id); reloadAnn() },
+                )
+            }
+            Column(Modifier.weight(1f).fillMaxHeight()) {
             // leave room for the bar so the first page isn't hidden
             if (readingMode) {
                 Spacer(Modifier.statusBarsPadding().height(64.dp))
@@ -478,7 +492,7 @@ private fun PdfReader(s: PdfSession, password: String?, onClose: () -> Unit, onR
             } else {
                 ContinuousPages(s, listState, night, pageHits, currentHit, annotations, tool, pageCallbacks)
             }
-        } }
+        } } }
 
         if (tool == Tool.Highlight || tool == Tool.Note) {
             Box(Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 64.dp)) {
@@ -530,7 +544,7 @@ private fun PdfReader(s: PdfSession, password: String?, onClose: () -> Unit, onR
                     DropdownMenuItem(text = { Text(stringResource(R.string.go_to_page)) }, onClick = { menu = false; goTo = true })
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.annotations)) }, leadingIcon = { Icon(Icons.AutoMirrored.Outlined.Notes, null) },
-                        onClick = { menu = false; sheet = "ann" },
+                        onClick = { menu = false; openPanel("ann") },
                     )
                     HorizontalDivider()
                     DropdownMenuItem(
@@ -582,8 +596,8 @@ private fun PdfReader(s: PdfSession, password: String?, onClose: () -> Unit, onR
         }
 
         BottomTools(chrome && !searchOpen && tool != Tool.Sign, scrollable = true) {
-            ToolButton(Icons.AutoMirrored.Filled.List, stringResource(R.string.outline)) { sheet = "outline" }
-            ToolButton(Icons.Outlined.GridView, stringResource(R.string.thumbnails)) { sheet = "thumbs" }
+            ToolButton(Icons.AutoMirrored.Filled.List, stringResource(R.string.outline), selected = wide && panel == "outline") { openPanel("outline") }
+            ToolButton(Icons.Outlined.GridView, stringResource(R.string.thumbnails), selected = wide && panel == "thumbs") { openPanel("thumbs") }
             ToolButton(Icons.Outlined.BorderColor, stringResource(R.string.highlight), selected = tool == Tool.Highlight) {
                 tool = if (tool == Tool.Highlight) Tool.None else Tool.Highlight
                 if (tool != Tool.None && readingMode) readingMode = false
@@ -782,6 +796,39 @@ private fun SinglePage(
             },
             onDoubleTap = { if (scale > 1f) { scale = 1f; offset = Offset.Zero } else scale = 2.5f },
         )
+    }
+}
+
+/** Tablet side panel: page thumbnails, contents and annotations stay open beside the document. */
+@Composable
+private fun PdfSidePanel(
+    s: PdfSession, panel: String, onPanel: (String?) -> Unit, current: Int, night: Boolean,
+    annotations: List<Annotation>, onJump: (Int) -> Unit, onDeleteAnn: (Annotation) -> Unit,
+) {
+    val tabs = listOf("thumbs" to Icons.Outlined.GridView, "outline" to Icons.AutoMirrored.Filled.List, "ann" to Icons.AutoMirrored.Outlined.Notes)
+    Row(Modifier.fillMaxHeight()) {
+        Surface(Modifier.width(300.dp).fillMaxHeight(), color = MaterialTheme.colorScheme.surface) {
+            Column(Modifier.statusBarsPadding().padding(top = 64.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    TabRow(selectedTabIndex = tabs.indexOfFirst { it.first == panel }.coerceAtLeast(0), modifier = Modifier.weight(1f), containerColor = Color.Transparent) {
+                        tabs.forEach { (k, icon) -> Tab(selected = panel == k, onClick = { onPanel(k) }, icon = { Icon(icon, null) }) }
+                    }
+                    IconButton(onClick = { onPanel(null) }) { Icon(Icons.Outlined.Close, stringResource(R.string.cancel)) }
+                }
+                Box(Modifier.weight(1f)) {
+                    Column {
+                        when (panel) {
+                            "thumbs" -> ThumbSheet(s, current, night, onJump)
+                            "outline" -> OutlineSheet(s, onJump)
+                            else -> AnnotationSheet(annotations, onGo = { a ->
+                                a.position.removePrefix("page:").substringBefore(':').toIntOrNull()?.let(onJump)
+                            }, onDelete = onDeleteAnn)
+                        }
+                    }
+                }
+            }
+        }
+        VerticalDivider()
     }
 }
 

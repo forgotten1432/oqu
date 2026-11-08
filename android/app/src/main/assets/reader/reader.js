@@ -34,6 +34,7 @@
     de.classList.toggle('paged', paged());
     sizePages();
     de.classList.toggle('fixed', !!s.fixed);
+    de.classList.toggle('wide', !!s.wide);
     if (s.dir === 'rtl' || s.dir === 'ltr') de.setAttribute('dir', s.dir);
     else if (origDir) de.setAttribute('dir', origDir);
     else de.removeAttribute('dir');

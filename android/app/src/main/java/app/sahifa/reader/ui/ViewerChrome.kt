@@ -152,6 +152,8 @@ fun BoxScope.PagePill(visible: Boolean, text: String, onClick: () -> Unit) {
         Text(
             text,
             color = Color.White, fontSize = 13.sp,
+            // "3 / 120" must read left-to-right even in a Uyghur/Arabic UI
+            style = androidx.compose.ui.text.TextStyle(textDirection = androidx.compose.ui.text.style.TextDirection.Ltr),
             modifier = Modifier.statusBarsPadding().padding(top = 72.dp, end = 12.dp)
                 .clip(RoundedCornerShape(14.dp)).background(Color(0xCC303030))
                 .clickable(onClick = onClick).padding(horizontal = 12.dp, vertical = 5.dp),

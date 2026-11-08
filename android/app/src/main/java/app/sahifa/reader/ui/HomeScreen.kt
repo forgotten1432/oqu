@@ -9,6 +9,15 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.Image
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -61,6 +70,7 @@ fun HomeScreen(
     onLanguage: (String) -> Unit = {},
 ) {
     var tab by rememberSaveable { mutableIntStateOf(0) }
+    val wide = isWideScreen()
     var searching by rememberSaveable { mutableStateOf(false) }
     var query by rememberSaveable { mutableStateOf("") }
     var refresh by remember { mutableIntStateOf(0) }
@@ -102,14 +112,14 @@ fun HomeScreen(
             }
         },
         bottomBar = {
-            NavigationBar {
+            if (!wide) NavigationBar {
                 NavigationBarItem(selected = tab == 0, onClick = { tab = 0 }, icon = { Icon(Icons.Filled.Home, null) }, label = { Text(stringResource(R.string.home)) })
                 NavigationBarItem(selected = tab == 1, onClick = { tab = 1 }, icon = { Icon(Icons.Outlined.Folder, null) }, label = { Text(stringResource(R.string.files)) })
                 NavigationBarItem(selected = tab == 2, onClick = { tab = 2 }, icon = { Icon(Icons.Outlined.Settings, null) }, label = { Text(stringResource(R.string.settings)) })
             }
         },
         floatingActionButton = {
-            if (tab != 2) {
+            if (tab != 2 && !wide) {
                 ExtendedFloatingActionButton(
                     onClick = { picker.launch(OPEN_MIME) },
                     icon = { Icon(Icons.Filled.Add, null) },
@@ -120,21 +130,40 @@ fun HomeScreen(
             }
         },
     ) { pad ->
-        Box(Modifier.padding(pad).fillMaxSize()) {
-            when (tab) {
-                0 -> RecentTab(query, refresh, onOpenEntry) { refresh++ }
-                1 -> FilesTab(onPick = { picker.launch(OPEN_MIME) })
-                else -> SettingsTab(appTheme, onAppTheme, onLanguage)
+        Row(Modifier.padding(pad).fillMaxSize()) {
+            if (wide) {
+                // Tablets: side navigation rail (mirrors to the right in Uyghur/Arabic)
+                NavigationRail(
+                    header = {
+                        FloatingActionButton(
+                            onClick = { picker.launch(OPEN_MIME) },
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                        ) { Icon(Icons.Filled.Add, stringResource(R.string.open_file)) }
+                    },
+                ) {
+                    Spacer(Modifier.height(12.dp))
+                    NavigationRailItem(selected = tab == 0, onClick = { tab = 0 }, icon = { Icon(Icons.Filled.Home, null) }, label = { Text(stringResource(R.string.home)) })
+                    NavigationRailItem(selected = tab == 1, onClick = { tab = 1 }, icon = { Icon(Icons.Outlined.Folder, null) }, label = { Text(stringResource(R.string.files)) })
+                    NavigationRailItem(selected = tab == 2, onClick = { tab = 2 }, icon = { Icon(Icons.Outlined.Settings, null) }, label = { Text(stringResource(R.string.settings)) })
+                }
             }
-            if (importing) {
-                LinearProgressIndicator(Modifier.fillMaxWidth().align(Alignment.TopCenter))
+            Box(Modifier.weight(1f).fillMaxHeight()) {
+                when (tab) {
+                    0 -> RecentTab(query, refresh, wide, onOpenEntry) { refresh++ }
+                    1 -> Centered(wide) { FilesTab(onPick = { picker.launch(OPEN_MIME) }) }
+                    else -> Centered(wide) { SettingsTab(appTheme, onAppTheme, onLanguage) }
+                }
+                if (importing) {
+                    LinearProgressIndicator(Modifier.fillMaxWidth().align(Alignment.TopCenter))
+                }
             }
         }
     }
 }
 
 @Composable
-private fun RecentTab(query: String, refresh: Int, onOpen: (LibraryEntry) -> Unit, onChanged: () -> Unit) {
+private fun RecentTab(query: String, refresh: Int, wide: Boolean, onOpen: (LibraryEntry) -> Unit, onChanged: () -> Unit) {
     var sub by rememberSaveable { mutableIntStateOf(0) }
     val all = remember(query, refresh) { Core.library.recent(query.ifBlank { null }) }
     val list = if (sub == 1) all.filter { it.starred } else all
@@ -146,9 +175,95 @@ private fun RecentTab(query: String, refresh: Int, onOpen: (LibraryEntry) -> Uni
         }
         if (list.isEmpty()) {
             EmptyState()
+        } else if (wide) {
+            // Tablets: a bookshelf of covers
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(168.dp),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 32.dp),
+                horizontalArrangement = Arrangement.spacedBy(20.dp),
+                verticalArrangement = Arrangement.spacedBy(24.dp),
+            ) {
+                items(list, key = { it.id }) { e -> DocCard(e, onOpen, onChanged) }
+            }
         } else {
             LazyColumn(contentPadding = PaddingValues(bottom = 96.dp)) {
                 items(list, key = { it.id }) { e -> DocRow(e, onOpen, onChanged) }
+            }
+        }
+    }
+}
+
+/** Keeps settings-style pages at a readable width on large screens. */
+@Composable
+private fun Centered(wide: Boolean, content: @Composable () -> Unit) {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+        Box(if (wide) Modifier.widthIn(max = 720.dp).fillMaxHeight() else Modifier.fillMaxSize()) { content() }
+    }
+}
+
+@Composable
+private fun DocCard(e: LibraryEntry, onOpen: (LibraryEntry) -> Unit, onChanged: () -> Unit) {
+    val ctx = LocalContext.current
+    val cover = rememberCover(e)
+    var menu by remember { mutableStateOf(false) }
+    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).clickable { onOpen(e) }) {
+        Box(
+            Modifier.fillMaxWidth().aspectRatio(0.72f).shadow(3.dp, RoundedCornerShape(8.dp))
+                .clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.surface),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (cover != null) {
+                Image(cover.asImageBitmap(), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop, alignment = Alignment.TopCenter)
+            } else {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    FormatBadge(e.format, Modifier.scale(1.6f))
+                    Spacer(Modifier.height(20.dp))
+                    Text(
+                        e.title ?: e.displayName, maxLines = 3, overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.bodySmall.copy(textDirection = TextDirection.Content),
+                        modifier = Modifier.padding(horizontal = 12.dp),
+                    )
+                }
+            }
+            // format chip + star in the corners
+            Text(
+                e.format, color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold,
+                modifier = Modifier.align(Alignment.TopStart).padding(8.dp).clip(RoundedCornerShape(4.dp))
+                    .background(formatColor(e.format)).padding(horizontal = 6.dp, vertical = 2.dp),
+            )
+            if (e.starred) Icon(Icons.Filled.Star, null, tint = Color(0xFFF2A600), modifier = Modifier.align(Alignment.TopEnd).padding(6.dp).size(20.dp))
+            if (e.progress > 0f) {
+                LinearProgressIndicator(
+                    progress = { e.progress }, modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(4.dp),
+                    trackColor = Color(0x33000000), drawStopIndicator = {},
+                )
+            }
+        }
+        Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.Top) {
+            Column(Modifier.weight(1f)) {
+                Text(
+                    e.title ?: e.displayName, maxLines = 2, overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.bodyMedium.copy(textDirection = TextDirection.Content), fontWeight = FontWeight.Medium,
+                )
+                Text(
+                    "${Formatter.formatShortFileSize(ctx, e.sizeBytes.toLong())} • ${relativeTime(e.lastOpenedMs)}",
+                    style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1,
+                )
+            }
+            Box {
+                IconButton(onClick = { menu = true }, modifier = Modifier.size(32.dp)) { Icon(Icons.Filled.MoreVert, stringResource(R.string.more)) }
+                DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(if (e.starred) R.string.unstar else R.string.star)) },
+                        leadingIcon = { Icon(if (e.starred) Icons.Filled.Star else Icons.Outlined.StarBorder, null) },
+                        onClick = { Core.library.setStarred(e.id, !e.starred); menu = false; onChanged() },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.remove_from_recent)) },
+                        leadingIcon = { Icon(Icons.Filled.Close, null) },
+                        onClick = { Core.library.remove(e.id); menu = false; onChanged() },
+                    )
+                }
             }
         }
     }

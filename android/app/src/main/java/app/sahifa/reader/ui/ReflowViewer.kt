@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.outlined.Notes
 import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.BookmarkBorder
@@ -33,6 +34,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -139,6 +142,7 @@ private class Session(val doc: ReflowDoc, val info: BookInfo, val entry: Library
     @Volatile var prefs = ReaderPrefs.load()
     @Volatile var userHighlights: List<String> = emptyList()
     @Volatile var landscape = false
+    @Volatile var wide = false
     var nextLabel = "→"
     val css: String by lazy { Core.app.assets.open("reader/reader.css").bufferedReader().readText() }
     val js: String by lazy { Core.app.assets.open("reader/reader.js").bufferedReader().readText() }
@@ -153,6 +157,7 @@ private class Session(val doc: ReflowDoc, val info: BookInfo, val entry: Library
             put("mode", p.mode)
             val twoCol = p.mode == "paged" && !info.fixedLayout && (p.spread == "on" || (p.spread == "auto" && landscape))
             put("cols", if (twoCol) 2 else 1)
+            put("wide", wide)
             put("dir", p.dir)
             put("fixed", info.fixedLayout)
             put("hasNext", chapter < info.chapters.size - 1)
@@ -264,6 +269,12 @@ private fun BookReader(s: Session, onClose: () -> Unit) {
     val webRef = remember { arrayOfNulls<WebView>(1) }
     val landscape = androidx.compose.ui.platform.LocalConfiguration.current.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
     s.landscape = landscape
+    val wide = isWideScreen()
+    s.wide = wide
+    var panel by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(if (wide) "toc" else null) }
+    fun openPanel(which: String) {
+        if (wide) panel = if (panel == which) null else which else sheet = which
+    }
 
     fun userHighlightsFor(ch: Int) = annotations.filter { it.kind == AnnotationKind.HIGHLIGHT && it.position == "ch:$ch" }.mapNotNull { it.text }
 
@@ -318,9 +329,57 @@ private fun BookReader(s: Session, onClose: () -> Unit) {
         }
     }
 
+    // Contents / annotations, shown in a bottom sheet on phones and a side panel on tablets.
+    val renderPanel: @Composable (String, Boolean) -> Unit = { which, closeAfter ->
+        if (which == "toc") {
+            TocSheet(s, chapter) { item ->
+                if (closeAfter) sheet = null
+                load(item.chapter.toInt(), item.anchor?.let { Start.Anchor(it) } ?: Start.Fraction(0.0))
+            }
+        } else {
+            AnnotationSheet(
+                annotations,
+                onGo = { a ->
+                    if (closeAfter) sheet = null
+                    val p = a.position.split(':')
+                    val ch = p.getOrNull(1)?.toIntOrNull() ?: 0
+                    if (a.kind == AnnotationKind.HIGHLIGHT && a.text != null) load(ch, Start.Find(a.text!!, 0))
+                    else load(ch, Start.Fraction(p.getOrNull(2)?.toDoubleOrNull() ?: 0.0))
+                },
+                onDelete = {
+                    Core.library.removeAnnotation(it.id)
+                    annotations = Core.library.annotations(s.entry.id)
+                    s.userHighlights = userHighlightsFor(chapter)
+                    js("Reader.userHighlights(${JSONArray(s.userHighlights)})")
+                },
+                label = { a ->
+                    val ch = a.position.split(':').getOrNull(1)?.toIntOrNull() ?: 0
+                    s.chapterTitle(ch).ifBlank { "#${ch + 1}" }
+                },
+            )
+        }
+    }
+
     Box(Modifier.fillMaxSize().background(themeColors(prefs.theme).bgColor)) {
+      Row(Modifier.fillMaxSize()) {
+        if (wide && panel != null) {
+            // zIndex: WebView can paint outside its bounds while scrolled; keep the panel on top
+            Surface(Modifier.zIndex(1f).width(300.dp).fillMaxHeight(), color = MaterialTheme.colorScheme.surface) {
+                Column(Modifier.statusBarsPadding().padding(top = 64.dp)) {
+                    val tabs = listOf("toc" to Icons.AutoMirrored.Filled.List, "ann" to Icons.AutoMirrored.Outlined.Notes)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        TabRow(selectedTabIndex = tabs.indexOfFirst { it.first == panel }.coerceAtLeast(0), modifier = Modifier.weight(1f), containerColor = Color.Transparent) {
+                            tabs.forEach { (k, icon) -> Tab(selected = panel == k, onClick = { panel = k }, icon = { Icon(icon, null) }) }
+                        }
+                        IconButton(onClick = { panel = null }) { Icon(Icons.Filled.Close, stringResource(R.string.cancel)) }
+                    }
+                    Column(Modifier.weight(1f)) { renderPanel(panel!!, false) }
+                }
+            }
+            VerticalDivider(Modifier.zIndex(1f))
+        }
         AndroidView(
-            modifier = Modifier.fillMaxSize().systemBarsPadding().padding(top = if (s.info.fixedLayout) 0.dp else 56.dp),
+            modifier = Modifier.weight(1f).fillMaxHeight().clipToBounds().systemBarsPadding().padding(top = if (s.info.fixedLayout) 0.dp else 56.dp),
             factory = { c ->
                 WebView(c).apply {
                     webRef[0] = this
@@ -383,6 +442,7 @@ private fun BookReader(s: Session, onClose: () -> Unit) {
             },
             onRelease = { it.destroy(); webRef[0] = null },
         )
+      }
 
         val chapterLabel = s.chapterTitle(chapter).ifBlank { stringResource(R.string.chapter_n, chapter + 1) }
         PagePill(chrome && !s.info.fixedLayout, if (prefs.mode == "paged") "${page + 1} / $pages" else "${(fraction * 100).toInt()}%") { sheet = "toc" }
@@ -449,7 +509,7 @@ private fun BookReader(s: Session, onClose: () -> Unit) {
         }
 
         BottomTools(chrome && !searchOpen) {
-            ToolButton(Icons.AutoMirrored.Filled.List, stringResource(R.string.outline)) { sheet = "toc" }
+            ToolButton(Icons.AutoMirrored.Filled.List, stringResource(R.string.outline), selected = wide && panel == "toc") { openPanel("toc") }
             ToolButton(Icons.Outlined.TextFields, stringResource(R.string.text_settings)) { sheet = "text" }
             if (selection.isNotBlank()) {
                 ToolButton(Icons.Outlined.BorderColor, stringResource(R.string.highlight)) {
@@ -468,35 +528,13 @@ private fun BookReader(s: Session, onClose: () -> Unit) {
                     annotations = Core.library.annotations(s.entry.id)
                 }
             }
-            ToolButton(Icons.AutoMirrored.Outlined.Notes, stringResource(R.string.annotations)) { sheet = "ann" }
+            ToolButton(Icons.AutoMirrored.Outlined.Notes, stringResource(R.string.annotations), selected = wide && panel == "ann") { openPanel("ann") }
         }
 
         if (sheet != null) {
             ModalBottomSheet(onDismissRequest = { sheet = null }) {
-                when (sheet) {
-                    "toc" -> TocSheet(s, chapter) { item -> sheet = null; load(item.chapter.toInt(), item.anchor?.let { Start.Anchor(it) } ?: Start.Fraction(0.0)) }
-                    "text" -> TextSettingsSheet(prefs, s.info.fixedLayout) { applyPrefs(it) }
-                    else -> AnnotationSheet(
-                        annotations,
-                        onGo = { a ->
-                            sheet = null
-                            val p = a.position.split(':')
-                            val ch = p.getOrNull(1)?.toIntOrNull() ?: 0
-                            if (a.kind == AnnotationKind.HIGHLIGHT && a.text != null) load(ch, Start.Find(a.text!!, 0))
-                            else load(ch, Start.Fraction(p.getOrNull(2)?.toDoubleOrNull() ?: 0.0))
-                        },
-                        onDelete = {
-                            Core.library.removeAnnotation(it.id)
-                            annotations = Core.library.annotations(s.entry.id)
-                            s.userHighlights = userHighlightsFor(chapter)
-                            js("Reader.userHighlights(${JSONArray(s.userHighlights)})")
-                        },
-                        label = { a ->
-                            val ch = a.position.split(':').getOrNull(1)?.toIntOrNull() ?: 0
-                            s.chapterTitle(ch).ifBlank { "#${ch + 1}" }
-                        },
-                    )
-                }
+                if (sheet == "text") TextSettingsSheet(prefs, s.info.fixedLayout) { applyPrefs(it) }
+                else renderPanel(sheet!!, true)
             }
         }
         linkUri?.let { LinkDialog(it, ctx) { linkUri = null } }

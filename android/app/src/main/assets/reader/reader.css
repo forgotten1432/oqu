@@ -75,6 +75,8 @@ html.paged img, html.paged svg { max-height: calc(var(--page-h, 100vh) - 80px) !
 html.paged h1, html.paged h2, html.paged h3 { break-after: avoid; }
 
 html.fixed body { padding: 0 !important; }
+/* Tablets: keep single-column lines at a comfortable reading length */
+html.wide:not(.two-col):not(.fixed) body { max-width: 40em !important; margin-left: auto !important; margin-right: auto !important; }
 /* faint spine between the two columns of a spread */
 html.paged.two-col { background-image: linear-gradient(to right, transparent calc(50% - 0.5px), color-mix(in srgb, var(--fg) 12%, transparent) calc(50% - 0.5px), color-mix(in srgb, var(--fg) 12%, transparent) calc(50% + 0.5px), transparent calc(50% + 0.5px)) !important; background-attachment: fixed !important; }
 
