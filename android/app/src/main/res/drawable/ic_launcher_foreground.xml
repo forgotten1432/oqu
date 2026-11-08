@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Original mark: an open page with a right-to-left reading arrow -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M34,30h28l12,12v36a4,4 0 0 1 -4,4H34a4,4 0 0 1 -4,-4V34a4,4 0 0 1 4,-4z"/>
+    <path android:fillColor="#FFF2B8BB" android:pathData="M62,30v10a2,2 0 0 0 2,2h10z"/>
+    <path android:fillColor="#FFC4282F"
+        android:pathData="M66,52H44l6,-6 -2.8,-2.8L37,53.4l10.2,10.2L50,60.8l-6,-6h22z"/>
+    <path android:fillColor="#FFC4282F" android:pathData="M40,68h26v3H40zM46,74h20v3H46z"/>
+</vector>

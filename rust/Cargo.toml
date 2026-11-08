@@ -1,0 +1,43 @@
+[package]
+name = "reader_core"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "Rust core of the Sahifa reader: PDF (PDFium), EPUB/DOCX/ODT/FB2/HTML/TXT/MD reflow, RTL-aware search"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "reader_core"
+
+[[bin]]
+name = "uniffi-bindgen"
+path = "src/bin/uniffi-bindgen.rs"
+required-features = ["bindgen"]
+
+[features]
+bindgen = ["uniffi/cli"]
+
+[dependencies]
+uniffi = "0.32.2"
+thiserror = "2"
+# PDF: Chromium's PDFium, bound dynamically to libpdfium.so (chromium/8125 binaries).
+pdfium-render = { version = "0.9.5", default-features = false, features = ["pdfium_8125", "thread_safe"] }
+zip = { version = "9.4.1", default-features = false, features = ["deflate"] }
+quick-xml = "0.42.0"
+unicode-bidi = "0.3.18"
+unicode-normalization = "0.1"
+encoding_rs = "0.8.44"
+chardetng = "1.0.0"
+pulldown-cmark = { version = "0.13.6", default-features = false, features = ["html"] }
+html-escape = "0.3.0"
+regex = "1.13.1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+lru = "0.16"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "unwind"
+strip = "symbols"

@@ -1,0 +1,16 @@
+# Rust
+rust/target/
+# Android / Gradle
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/keystore.properties
+*.jks
+*.keystore
+.idea/
+*.iml
+# Native libraries are built (libreader_core.so) or downloaded (libpdfium.so) by build-rust.sh
+android/app/src/main/jniLibs/
+vendor/
+.DS_Store

@@ -1,0 +1,87 @@
+@font-face { font-display: swap; font-family: "Sahifa Naskh"; src: url("/__fonts/NotoNaskhArabic.ttf"); font-weight: 100 900; }
+@font-face { font-display: swap; font-family: "Sahifa Vazirmatn"; src: url("/__fonts/Vazirmatn.ttf"); font-weight: 100 900; }
+@font-face { font-display: swap; font-family: "Sahifa Amiri"; src: url("/__fonts/Amiri-Regular.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "Sahifa Amiri"; src: url("/__fonts/Amiri-Bold.ttf"); font-weight: 700; }
+@font-face { font-display: swap; font-family: "Sahifa Nastaliq"; src: url("/__fonts/NotoNastaliqUrdu.ttf"); font-weight: 100 900; }
+@font-face { font-display: swap; font-family: "Sahifa Hebrew"; src: url("/__fonts/NotoSansHebrew.ttf"); font-weight: 100 900; }
+
+/* Uyghur: UKIJ fonts (OFL-1.1). Books often name UKIJ / ALKATIP / Microsoft
+   Uighur fonts that phones don't have; map those names to the bundled UKIJ
+   files so Uyghur books look as their authors intended. */
+@font-face { font-display: swap; font-family: "UKIJ Tuz"; src: url("/__fonts/UKIJTuz.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Tuz"; src: url("/__fonts/UKIJTuzBold.ttf"); font-weight: 700; }
+@font-face { font-display: swap; font-family: "UKIJ Tuz Tom"; src: url("/__fonts/UKIJTuz.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Tuz Tom"; src: url("/__fonts/UKIJTuzBold.ttf"); font-weight: 700; }
+@font-face { font-display: swap; font-family: "UKIJ Ekran"; src: url("/__fonts/UKIJEkran.ttf"); }
+@font-face { font-display: swap; font-family: "UKIJ Tuz Basma"; src: url("/__fonts/UKIJTuzB.ttf"); }
+@font-face { font-display: swap; font-family: "UKIJ Basma"; src: url("/__fonts/UKIJTuzB.ttf"); }
+@font-face { font-display: swap; font-family: "UKIJ Esliye"; src: url("/__fonts/UKIJTuz.ttf"); }
+@font-face { font-display: swap; font-family: "UKIJ Qolyazma"; src: url("/__fonts/UKIJTuz.ttf"); }
+@font-face { font-display: swap; font-family: "ALKATIP Basma"; src: url("/__fonts/UKIJTuzB.ttf"); }
+@font-face { font-display: swap; font-family: "ALKATIP Basma Tom"; src: url("/__fonts/UKIJTuzB.ttf"); font-weight: 400 700; }
+@font-face { font-display: swap; font-family: "ALKATIP Tor"; src: url("/__fonts/UKIJTuz.ttf"); }
+@font-face { font-display: swap; font-family: "ALKATIP Tor Tom"; src: url("/__fonts/UKIJTuzBold.ttf"); }
+@font-face { font-display: swap; font-family: "Microsoft Uighur"; src: url("/__fonts/UKIJTuz.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "Microsoft Uighur"; src: url("/__fonts/UKIJTuzBold.ttf"); font-weight: 700; }
+
+:root {
+  --fs: 18px; --lh: 1.7; --margin: 22px;
+  --fg: #1b1b1b; --bg: #ffffff; --link: #b3261e; --mark: rgba(255, 213, 79, .55); --hit: rgba(255, 109, 0, .55);
+}
+html { background: var(--bg) !important; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+html { font-size: var(--fs) !important; }
+body {
+  margin: 0 !important; padding: 18px var(--margin) 28px !important; box-sizing: border-box;
+  color: var(--fg); background: transparent !important;
+  line-height: var(--lh) !important; overflow-wrap: break-word; word-wrap: break-word;
+  max-width: none !important;
+  -webkit-tap-highlight-color: transparent;
+}
+/* Paragraphs without an explicit dir pick their direction from their own
+   first strong character: correct for mixed Arabic/Hebrew/Latin books. */
+p:not([dir]), li:not([dir]), h1:not([dir]), h2:not([dir]), h3:not([dir]), h4:not([dir]), h5:not([dir]), h6:not([dir]),
+blockquote:not([dir]), dd:not([dir]), dt:not([dir]), figcaption:not([dir]), td:not([dir]), th:not([dir]) {
+  unicode-bidi: plaintext;
+}
+/* Separate rule: an unsupported :has() must not invalidate the rule above. */
+div:not([dir]):not(:has(> p, > div, > section, > h1, > h2, > h3, > ul, > ol, > table)) { unicode-bidi: plaintext; }
+/* Uyghur default when the book names no (available) font. */
+html:lang(ug) { font-family: "UKIJ Tuz", "Sahifa Naskh", serif; }
+
+img, svg, video { max-width: 100% !important; height: auto !important; }
+pre, code { white-space: pre-wrap; unicode-bidi: isolate; direction: ltr; }
+table { max-width: 100%; }
+a { color: var(--link); }
+/* Kashida-friendly justification for Arabic, normal elsewhere. */
+html.justify p { text-align: justify; text-justify: inter-word; }
+html.justify p:lang(ar), html.justify p:lang(fa), html.justify p:lang(ur) { text-justify: kashida; }
+
+html.font-custom body, html.font-custom p, html.font-custom li, html.font-custom div, html.font-custom span,
+html.font-custom h1, html.font-custom h2, html.font-custom h3, html.font-custom h4, html.font-custom td, html.font-custom blockquote {
+  font-family: var(--font) !important;
+}
+
+/* Themes: in non-light themes we must override book colours to stay legible. */
+html.themed *:not(img):not(svg):not(svg *) { color: var(--fg) !important; background-color: transparent !important; border-color: color-mix(in srgb, var(--fg) 25%, transparent) !important; }
+html.themed a, html.themed a * { color: var(--link) !important; }
+html.themed img { opacity: .92; }
+
+/* Paged mode: the root is a multi-column container, one column per screen.
+   Top/bottom padding on the container repeats on every page. */
+html.paged { height: 100vh !important; overflow: hidden !important; padding: 26px 0 30px !important; margin: 0 !important; box-sizing: border-box;
+  column-width: 100vw; -webkit-column-width: 100vw; column-gap: 0; column-fill: auto; }
+html.paged body { padding-top: 0 !important; padding-bottom: 0 !important; min-height: 0 !important; height: auto !important; }
+html.paged img, html.paged svg { max-height: calc(var(--page-h, 100vh) - 80px) !important; object-fit: contain; break-inside: avoid; }
+html.paged h1, html.paged h2, html.paged h3 { break-after: avoid; }
+
+html.fixed body { padding: 0 !important; }
+
+::highlight(sahifa-hit) { background-color: var(--mark); color: inherit; }
+::highlight(sahifa-current) { background-color: var(--hit); color: inherit; }
+::highlight(sahifa-user) { background-color: rgba(255, 213, 79, .5); }
+mark.sahifa-hit { background: var(--mark); color: inherit; }
+mark.sahifa-current { background: var(--hit); color: inherit; }
+mark.sahifa-user { background: rgba(255, 213, 79, .5); color: inherit; }
+
+#sahifa-next { display: block; margin: 40px auto 60px; padding: 12px 22px; border-radius: 22px; border: 1px solid color-mix(in srgb, var(--fg) 30%, transparent);
+  background: transparent; color: var(--fg); font: inherit; font-size: 15px; }
