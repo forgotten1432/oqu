@@ -75,6 +75,8 @@ html.paged img, html.paged svg { max-height: calc(var(--page-h, 100vh) - 80px) !
 html.paged h1, html.paged h2, html.paged h3 { break-after: avoid; }
 
 html.fixed body { padding: 0 !important; }
+/* faint spine between the two columns of a spread */
+html.paged.two-col { background-image: linear-gradient(to right, transparent calc(50% - 0.5px), color-mix(in srgb, var(--fg) 12%, transparent) calc(50% - 0.5px), color-mix(in srgb, var(--fg) 12%, transparent) calc(50% + 0.5px), transparent calc(50% + 0.5px)) !important; background-attachment: fixed !important; }
 
 ::highlight(sahifa-hit) { background-color: var(--mark); color: inherit; }
 ::highlight(sahifa-current) { background-color: var(--hit); color: inherit; }

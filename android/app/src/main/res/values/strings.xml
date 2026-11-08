@@ -109,4 +109,11 @@
     <string name="whiteout_hint">Drag over the area to cover</string>
     <string name="language">Language</string>
     <string name="lang_system">System default</string>
+    <string name="view_spread">Two pages</string>
+    <string name="spread_landscape">Two pages when turned sideways</string>
+    <string name="cover_alone">Show cover page separately</string>
+    <string name="two_columns">Two columns</string>
+    <string name="two_col_auto">When sideways</string>
+    <string name="two_col_on">Always</string>
+    <string name="two_col_off">Never</string>
 </resources>

@@ -109,4 +109,11 @@
     <string name="whiteout_hint">Örtülecek alanın üzerinden sürükleyin</string>
     <string name="language">Dil</string>
     <string name="lang_system">Sistem dili</string>
+    <string name="view_spread">İki sayfa</string>
+    <string name="spread_landscape">Yan çevirince iki sayfa</string>
+    <string name="cover_alone">Kapak sayfası ayrı</string>
+    <string name="two_columns">İki sütun</string>
+    <string name="two_col_auto">Yan çevirince</string>
+    <string name="two_col_on">Her zaman</string>
+    <string name="two_col_off">Hiçbir zaman</string>
 </resources>

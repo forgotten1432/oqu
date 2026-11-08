@@ -73,12 +73,15 @@ data class ReaderPrefs(
     val justify: Boolean = false,
     val mode: String = "paged",
     val dir: String = "auto",
+    /** Two columns per screen: "auto" (landscape only), "on", "off". */
+    val spread: String = "auto",
 ) {
     fun save() {
         Core.setSetting("rf_fs", fs.toString()); Core.setSetting("rf_lh", lh.toString())
         Core.setSetting("rf_margin", margin.toString()); Core.setSetting("rf_theme", theme)
         Core.setSetting("rf_font", font); Core.setSetting("rf_justify", if (justify) "1" else "0")
         Core.setSetting("rf_mode", mode)
+        Core.setSetting("rf_spread", spread)
     }
 
     companion object {
@@ -90,6 +93,7 @@ data class ReaderPrefs(
             font = Core.setting("rf_font", "book"),
             justify = Core.setting("rf_justify", "0") == "1",
             mode = Core.setting("rf_mode", "paged"),
+            spread = Core.setting("rf_spread", "auto"),
         )
     }
 }
@@ -134,6 +138,7 @@ private class Session(val doc: ReflowDoc, val info: BookInfo, val entry: Library
     @Volatile var start: Start = Start.Fraction(0.0)
     @Volatile var prefs = ReaderPrefs.load()
     @Volatile var userHighlights: List<String> = emptyList()
+    @Volatile var landscape = false
     var nextLabel = "→"
     val css: String by lazy { Core.app.assets.open("reader/reader.css").bufferedReader().readText() }
     val js: String by lazy { Core.app.assets.open("reader/reader.js").bufferedReader().readText() }
@@ -146,6 +151,8 @@ private class Session(val doc: ReflowDoc, val info: BookInfo, val entry: Library
             put("font", fontCss(p.font) ?: JSONObject.NULL)
             put("justify", p.justify)
             put("mode", p.mode)
+            val twoCol = p.mode == "paged" && !info.fixedLayout && (p.spread == "on" || (p.spread == "auto" && landscape))
+            put("cols", if (twoCol) 2 else 1)
             put("dir", p.dir)
             put("fixed", info.fixedLayout)
             put("hasNext", chapter < info.chapters.size - 1)
@@ -255,6 +262,8 @@ private fun BookReader(s: Session, onClose: () -> Unit) {
     var searching by remember { mutableStateOf(false) }
 
     val webRef = remember { arrayOfNulls<WebView>(1) }
+    val landscape = androidx.compose.ui.platform.LocalConfiguration.current.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+    s.landscape = landscape
 
     fun userHighlightsFor(ch: Int) = annotations.filter { it.kind == AnnotationKind.HIGHLIGHT && it.position == "ch:$ch" }.mapNotNull { it.text }
 
@@ -281,6 +290,9 @@ private fun BookReader(s: Session, onClose: () -> Unit) {
         if (h.chapter.toInt() == chapter) js("Reader.find(${JSONObject.quote(query)}, ${h.occurrence})")
         else load(h.chapter.toInt(), Start.Find(query, h.occurrence.toInt()))
     }
+
+    // Rotating the phone switches between one and two columns, keeping the place.
+    LaunchedEffect(landscape) { js("window.Reader && Reader.apply(${s.settingsJson(prefs)});") }
 
     val bridge = remember {
         object {
@@ -555,6 +567,15 @@ private fun TextSettingsSheet(p: ReaderPrefs, fixed: Boolean, onChange: (ReaderP
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             FilterChip(selected = p.mode == "paged", onClick = { onChange(p.copy(mode = "paged")) }, label = { Text(stringResource(R.string.paged)) })
             FilterChip(selected = p.mode == "scroll", onClick = { onChange(p.copy(mode = "scroll")) }, label = { Text(stringResource(R.string.scrolled)) })
+        }
+        if (!fixed && p.mode == "paged") {
+            Label(stringResource(R.string.two_columns))
+            @OptIn(ExperimentalLayoutApi::class)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf("auto" to R.string.two_col_auto, "on" to R.string.two_col_on, "off" to R.string.two_col_off).forEach { (k, r) ->
+                    FilterChip(selected = p.spread == k, onClick = { onChange(p.copy(spread = k)) }, label = { Text(stringResource(r)) })
+                }
+            }
         }
     }
 }

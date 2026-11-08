@@ -47,11 +47,18 @@
     var st = de.style;
     if (paged()) {
       st.setProperty('height', window.innerHeight + 'px', 'important');
-      st.setProperty('column-width', W() + 'px', 'important');
+      // Two columns per screen in landscape ("book spread"). Columns flow in
+      // the document's direction, so RTL books put the first column on the right.
+      var cols = S.cols === 2 ? 2 : 1;
+      st.setProperty('column-width', (W() / cols - 0.5) + 'px', 'important');
+      st.setProperty('column-count', 'auto', 'important');
+      de.classList.toggle('two-col', cols === 2);
       st.setProperty('--page-h', window.innerHeight + 'px');
     } else {
       st.removeProperty('height');
       st.removeProperty('column-width');
+      st.removeProperty('column-count');
+      de.classList.remove('two-col');
     }
   }
 
@@ -69,7 +76,8 @@
 
   R.pages = function () {
     if (!paged()) return 1;
-    return Math.max(1, Math.round(de.scrollWidth / W()));
+    // a half-filled last screen still counts as a page
+    return Math.max(1, Math.ceil(de.scrollWidth / W() - 0.05));
   };
   R.page = function () {
     return paged() ? Math.round(Math.abs(window.scrollX) / W()) : 0;

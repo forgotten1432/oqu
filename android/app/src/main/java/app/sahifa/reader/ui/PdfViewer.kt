@@ -239,7 +239,17 @@ private fun PdfReader(s: PdfSession, password: String?, onClose: () -> Unit, onR
 
     var chrome by remember { mutableStateOf(true) }
     var night by remember { mutableStateOf(Core.setting("pdf_night", "0") == "1") }
-    var single by remember { mutableStateOf(Core.setting("pdf_single", "0") == "1") }
+    // View: "continuous" | "single" | "spread" (two pages side by side)
+    var viewMode by remember {
+        mutableStateOf(Core.setting("pdf_view", if (Core.setting("pdf_single", "0") == "1") "single" else "continuous"))
+    }
+    var autoSpread by remember { mutableStateOf(Core.setting("pdf_auto_spread", "1") == "1") }
+    var coverAlone by remember { mutableStateOf(Core.setting("pdf_cover_alone", "0") == "1") }
+    val landscape = androidx.compose.ui.platform.LocalConfiguration.current.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+    val mode = if (landscape && autoSpread && count > 1) "spread" else viewMode
+    val single = mode == "single"
+    val spreads = remember(count, coverAlone) { buildSpreads(count, coverAlone) }
+    fun spreadOf(page: Int) = spreads.indexOfFirst { page in it }.coerceAtLeast(0)
     var rtlPages by remember { mutableStateOf(s.info.direction == CoreDir.RTL) }
     var readingMode by remember { mutableStateOf(false) }
     var currentPage by remember { mutableIntStateOf(startPage) }
@@ -326,10 +336,17 @@ private fun PdfReader(s: PdfSession, password: String?, onClose: () -> Unit, onR
 
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = startPage)
     val pagerState = rememberPagerState(initialPage = startPage) { count }
+    val spreadState = rememberPagerState(initialPage = spreadOf(startPage)) { spreads.size }
 
     fun jump(page: Int) {
         val p = page.coerceIn(0, count - 1)
-        scope.launch { if (single) pagerState.scrollToPage(p) else listState.scrollToItem(p) }
+        scope.launch {
+            when (mode) {
+                "single" -> pagerState.scrollToPage(p)
+                "spread" -> spreadState.scrollToPage(spreadOf(p))
+                else -> listState.scrollToItem(p)
+            }
+        }
         currentPage = p
     }
 
@@ -354,9 +371,19 @@ private fun PdfReader(s: PdfSession, password: String?, onClose: () -> Unit, onR
     }
 
     // track page + persist progress
-    LaunchedEffect(single) {
-        if (single) {
+    // keep the reading position when the view changes (menu or rotating the phone)
+    LaunchedEffect(mode, spreads) {
+        val keep = currentPage
+        when (mode) {
+            "single" -> pagerState.scrollToPage(keep)
+            "spread" -> spreadState.scrollToPage(spreadOf(keep))
+            else -> listState.scrollToItem(keep)
+        }
+        currentPage = keep
+        if (mode == "single") {
             snapshotFlow { pagerState.currentPage }.distinctUntilChanged().collect { currentPage = it }
+        } else if (mode == "spread") {
+            snapshotFlow { spreadState.currentPage }.distinctUntilChanged().collect { currentPage = spreads.getOrNull(it)?.first() ?: 0 }
         } else {
             snapshotFlow {
                 val info = listState.layoutInfo
@@ -432,6 +459,14 @@ private fun PdfReader(s: PdfSession, password: String?, onClose: () -> Unit, onR
             if (readingMode) {
                 Spacer(Modifier.statusBarsPadding().height(64.dp))
                 PdfReadingMode(s, currentPage, night)
+            } else if (mode == "spread") {
+                // Right-to-left books (Uyghur, Arabic…) open like a printed RTL book:
+                // first page on the right, swipe left-to-right to go forward.
+                CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides if (rtlPages) LayoutDirection.Rtl else LayoutDirection.Ltr) {
+                    HorizontalPager(state = spreadState, modifier = Modifier.fillMaxSize(), beyondViewportPageCount = 1, key = { spreads[it].first() }) { i ->
+                        SpreadView(s, spreads[i], night, pageHits, currentHit, annotations, tool, pageCallbacks)
+                    }
+                }
             } else if (single) {
                 CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides if (rtlPages) LayoutDirection.Rtl else LayoutDirection.Ltr) {
                     HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize(), beyondViewportPageCount = 1, key = { it }) { page ->
@@ -459,7 +494,11 @@ private fun PdfReader(s: PdfSession, password: String?, onClose: () -> Unit, onR
         }
         if (saving) LinearProgressIndicator(Modifier.fillMaxWidth().align(Alignment.TopCenter).statusBarsPadding())
 
-        PagePill(pillVisible && !readingMode, "${currentPage + 1} / $count") { goTo = true }
+        val pillText = if (mode == "spread") {
+            val sp = spreads.getOrNull(spreadOf(currentPage)) ?: listOf(currentPage)
+            (if (sp.size == 2) "${sp[0] + 1}–${sp[1] + 1}" else "${sp[0] + 1}") + " / $count"
+        } else "${currentPage + 1} / $count"
+        PagePill(pillVisible && !readingMode, pillText) { goTo = true }
 
         ViewerTopBar(
             visible = chrome,
@@ -482,8 +521,11 @@ private fun PdfReader(s: PdfSession, password: String?, onClose: () -> Unit, onR
                 IconButton(onClick = { menu = true }) { Icon(Icons.Filled.MoreVert, stringResource(R.string.more)) }
                 DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                     CheckItem(stringResource(R.string.night_mode), night) { night = it; Core.setSetting("pdf_night", if (it) "1" else "0") }
-                    CheckItem(stringResource(R.string.view_continuous), !single) { if (it) { single = false; Core.setSetting("pdf_single", "0"); scope.launch { listState.scrollToItem(currentPage) } } }
-                    CheckItem(stringResource(R.string.view_single), single) { if (it) { single = true; Core.setSetting("pdf_single", "1"); scope.launch { pagerState.scrollToPage(currentPage) } } }
+                    CheckItem(stringResource(R.string.view_continuous), viewMode == "continuous") { if (it) { viewMode = "continuous"; Core.setSetting("pdf_view", viewMode) } }
+                    CheckItem(stringResource(R.string.view_single), viewMode == "single") { if (it) { viewMode = "single"; Core.setSetting("pdf_view", viewMode) } }
+                    CheckItem(stringResource(R.string.view_spread), viewMode == "spread") { if (it) { viewMode = "spread"; Core.setSetting("pdf_view", viewMode) } }
+                    CheckItem(stringResource(R.string.spread_landscape), autoSpread) { autoSpread = it; Core.setSetting("pdf_auto_spread", if (it) "1" else "0") }
+                    CheckItem(stringResource(R.string.cover_alone), coverAlone) { coverAlone = it; Core.setSetting("pdf_cover_alone", if (it) "1" else "0") }
                     CheckItem(stringResource(R.string.page_direction_rtl), rtlPages) { rtlPages = it }
                     DropdownMenuItem(text = { Text(stringResource(R.string.go_to_page)) }, onClick = { menu = false; goTo = true })
                     DropdownMenuItem(
@@ -539,7 +581,7 @@ private fun PdfReader(s: PdfSession, password: String?, onClose: () -> Unit, onR
             }
         }
 
-        BottomTools(chrome && !searchOpen && tool != Tool.Sign) {
+        BottomTools(chrome && !searchOpen && tool != Tool.Sign, scrollable = true) {
             ToolButton(Icons.AutoMirrored.Filled.List, stringResource(R.string.outline)) { sheet = "outline" }
             ToolButton(Icons.Outlined.GridView, stringResource(R.string.thumbnails)) { sheet = "thumbs" }
             ToolButton(Icons.Outlined.BorderColor, stringResource(R.string.highlight), selected = tool == Tool.Highlight) {
@@ -740,6 +782,69 @@ private fun SinglePage(
             },
             onDoubleTap = { if (scale > 1f) { scale = 1f; offset = Offset.Zero } else scale = 2.5f },
         )
+    }
+}
+
+/** Pairs pages for two-page view: [0,1],[2,3]… or, with a separate cover, [0],[1,2],[3,4]… */
+private fun buildSpreads(count: Int, coverAlone: Boolean): List<List<Int>> {
+    val out = mutableListOf<List<Int>>()
+    var p = 0
+    if (coverAlone && count > 0) { out += listOf(0); p = 1 }
+    while (p < count) {
+        out += if (p + 1 < count) listOf(p, p + 1) else listOf(p)
+        p += 2
+    }
+    return out
+}
+
+/**
+ * Two pages side by side, zoomed together. The Row follows the ambient layout
+ * direction, so in RTL books the first page of each spread sits on the right.
+ */
+@Composable
+private fun SpreadView(
+    s: PdfSession, pages: List<Int>, night: Boolean, pageHits: Map<Int, List<PdfSearchHit>>, currentHit: PdfSearchHit?,
+    annotations: List<Annotation>, tool: Tool, cb: PageCallbacks,
+) {
+    var scale by remember { mutableFloatStateOf(1f) }
+    var offset by remember { mutableStateOf(Offset.Zero) }
+    val ts = rememberTransformableState { zc, pan, _ ->
+        scale = (scale * zc).coerceIn(1f, 5f)
+        offset = if (scale == 1f) Offset.Zero else offset + pan
+    }
+    BoxWithConstraints(
+        Modifier.fillMaxSize().clipToBounds()
+            .transformable(ts, canPan = { scale > 1f })
+            .padding(top = 64.dp, bottom = 8.dp, start = 8.dp, end = 8.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        val gap = with(LocalDensity.current) { 2.dp.toPx() }
+        val slotW = (constraints.maxWidth - gap) / 2f
+        val maxH = constraints.maxHeight.toFloat()
+        // one shared height so facing pages line up like a real book
+        val h = pages.minOf { min(maxH, slotW * s.aspect(it)) }
+        val density = LocalDensity.current
+        // a lone page (cover / last page) stays on its own side of the spine
+        val lone = pages.size == 1
+        Row(
+            Modifier.graphicsLayer { scaleX = scale; scaleY = scale; translationX = offset.x; translationY = offset.y },
+            horizontalArrangement = Arrangement.spacedBy(2.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            // cover: right-hand page in LTR books, left-hand in RTL (Row mirrors this)
+            if (lone && pages[0] == 0) Spacer(Modifier.width(with(density) { slotW.toDp() }))
+            for (page in pages) {
+                val w = h / s.aspect(page)
+                CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides LayoutDirection.Ltr) {
+                    PageView(
+                        s, page, (w * scale).roundToInt(), 4096, night, pageHits[page], currentHit, annotations, tool, cb,
+                        Modifier.width(with(density) { w.toDp() }).height(with(density) { h.toDp() }),
+                        onDoubleTap = { if (scale > 1f) { scale = 1f; offset = Offset.Zero } else scale = 2f },
+                    )
+                }
+            }
+            if (lone && pages[0] != 0) Spacer(Modifier.width(with(density) { slotW.toDp() }))
+        }
     }
 }
 

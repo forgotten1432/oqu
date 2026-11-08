@@ -19,6 +19,18 @@ Uygurca ve sağdan sola (RTL) yazılar için Android belge okuyucu. Çekirdeği 
 - **Sayfalar:** Sayfa döndürme ve silme. Önceden döndürülmüş sayfalarda da koordinatlar doğru hesaplanır.
 - **Yazdırma:** PDF'ler Android'in yazdırma servisine olduğu gibi (vektörel) gönderilir. Kitaplarda o anki bölüm açık temada yazdırılır.
 
+## İki sayfa görünümü
+- **PDF:** Görünüm menüsünde üç seçenek var: sürekli kaydırma, tek sayfa ve iki sayfa.
+  - Telefon yan çevrilince otomatik olarak iki sayfaya geçer; dik tutunca önceki görünüme döner. Bu davranış menüden kapatılabilir.
+  - Görünüm değişince kaldığın sayfa korunur.
+  - İstersen kapak sayfası ayrı gösterilir.
+- **Sağdan sola belgeler (Uygurca, Arapça):** Basılı kitap gibi açılır.
+  - 1. sayfa sağda, 2. sayfa solda durur.
+  - Sayfalar sağdan sola çevrilir: parmağını soldan sağa kaydırınca ileri gider.
+  - Tek başına kalan kapak sayfası da kitap düzenine göre yerleşir: soldan sağa kitaplarda sağda, sağdan sola kitaplarda solda.
+- **Kitaplar (EPUB, Word vb.):** Yatay ekranda iki sütun gösterilir. Metin ayarlarından seçilir: "Yan çevirince", "Her zaman" veya "Hiçbir zaman".
+  - Sağdan sola kitaplarda metin sağ sütunda başlar.
+
 ## Dil ve yön
 - **Arayüz:** Dil Ayarlar'dan seçilir (Sistem, ئۇيغۇرچە, Türkçe, English, العربية). Uygurca ve Arapça seçilince arayüz otomatik olarak sağdan sola, diğer dillerde soldan sağa olur.
 - **Belge içeriği:** Arayüz dilinden bağımsızdır, yönü belgenin kendi diline göre otomatik belirlenir. Örneğin Türkçe arayüzde açılan Uygurca kitap sağdan sola gösterilir.

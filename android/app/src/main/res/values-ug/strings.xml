@@ -109,4 +109,11 @@
     <string name="whiteout_hint">يېپىلىدىغان دائىرىنىڭ ئۈستىدىن سۆرەڭ</string>
     <string name="language">تىل</string>
     <string name="lang_system">سىستېما تىلى</string>
+    <string name="view_spread">ئىككى بەت</string>
+    <string name="spread_landscape">يانغا ئايلاندۇرغاندا ئىككى بەت</string>
+    <string name="cover_alone">مۇقاۋا بېتىنى ئايرىم كۆرسىتىش</string>
+    <string name="two_columns">ئىككى ئىستون</string>
+    <string name="two_col_auto">يانغا ئايلاندۇرغاندا</string>
+    <string name="two_col_on">ھەمىشە</string>
+    <string name="two_col_off">ھەرگىز</string>
 </resources>

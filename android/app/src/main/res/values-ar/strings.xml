@@ -109,4 +109,11 @@
     <string name="whiteout_hint">اسحب فوق المنطقة لتغطيتها</string>
     <string name="language">اللغة</string>
     <string name="lang_system">لغة النظام</string>
+    <string name="view_spread">صفحتان</string>
+    <string name="spread_landscape">صفحتان عند تدوير الهاتف</string>
+    <string name="cover_alone">إظهار صفحة الغلاف منفردة</string>
+    <string name="two_columns">عمودان</string>
+    <string name="two_col_auto">عند التدوير</string>
+    <string name="two_col_on">دائمًا</string>
+    <string name="two_col_off">أبدًا</string>
 </resources>
