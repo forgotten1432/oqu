@@ -2,7 +2,7 @@
 
 Uygurca ve sağdan sola (RTL) yazılar için Android belge okuyucu. Çekirdeği Rust ile yazıldı. PDF, EPUB, Word (DOCX), ODT, FB2, HTML, TXT, Markdown ve CBZ dosyalarını açar.
 
-**İndir:** [Releases](../../releases) sayfasından telefonuna uygun APK'yı al. Çoğu telefon için `arm64-v8a`, emin değilsen `universal`. Android 8.0 veya üstü gerekir.
+**İndir:** [Releases](../../releases/latest) sayfasından **`arm64-v8a`** APK'sını indir; bu dosya çoğu telefon ve tablette, Android 17 dahil, çalışır. Emin değilsen `universal` dosyasını al. `old-32bit` dosyası yalnızca çok eski 32 bit telefonlar içindir; yeni cihazlar onu kurmaz. APK'yı WPS gibi bir ofis uygulamasıyla değil, **Dosyalar** uygulamasından ya da Chrome'un **İndirilenler** bölümünden aç. Android 8.0 veya üstü gerekir.
 
 ## Motorlar
 | Biçim | Motor | Neden |
