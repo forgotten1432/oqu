@@ -10,6 +10,19 @@ Uygurca ve sağdan sola (RTL) yazılar için Android belge okuyucu. Çekirdeği 
 | PDF | **PDFium** (Chromium, `pdfium-render` 0.9.5 + chromium/8125 ikilileri) | Chrome/Android ile aynı motor, BSD/Apache lisansı, kararlı ve hızlı. MuPDF bir tık daha hızlı olabilir ama AGPL lisanslı ve Rust'tan Android'e derlemesi zor. |
 | EPUB, DOCX, ODT, FB2, HTML, TXT, MD, CBZ | Rust ayrıştırıcıları → temizlenmiş (X)HTML → **Android WebView (Blink + HarfBuzz + ICU)** | Arapça/Farsça/Urduca/İbranice için en iyi şekillendirme ve bidi desteği bu. |
 
+## Düzenleme, imza ve yazdırma
+- **Doldur ve İmzala (PDF):**
+  - Ekleyebileceklerin: metin, parmakla çizilen imza (kaydedilir ve tekrar kullanılabilir), tarih, ✓ / ✗ ve beyazla örtme.
+  - Eklenen öğeler sürüklenip boyutlandırılabilir.
+  - Kaydedince öğeler PDF'in içine yazılır. Uygurca metin Android'in kendi motoruyla şekillendirildiği için harfler doğru bağlanır.
+  - Uygulamada yapılan vurgu ve notlar, gerçek PDF açıklaması (annotation) olarak dosyaya gömülür. Böylece başka PDF okuyucularında da görünürler.
+- **Sayfalar:** Sayfa döndürme ve silme. Önceden döndürülmüş sayfalarda da koordinatlar doğru hesaplanır.
+- **Yazdırma:** PDF'ler Android'in yazdırma servisine olduğu gibi (vektörel) gönderilir. Kitaplarda o anki bölüm açık temada yazdırılır.
+
+## Dil ve yön
+- **Arayüz:** Dil Ayarlar'dan seçilir (Sistem, ئۇيغۇرچە, Türkçe, English, العربية). Uygurca ve Arapça seçilince arayüz otomatik olarak sağdan sola, diğer dillerde soldan sağa olur.
+- **Belge içeriği:** Arayüz dilinden bağımsızdır, yönü belgenin kendi diline göre otomatik belirlenir. Örneğin Türkçe arayüzde açılan Uygurca kitap sağdan sola gösterilir.
+
 ## Uygurca desteği
 - **Arama:** Uygurca belgelerde ى/ي, ې, ە, ۇ/ۆ/ۈ, ۋ, ڭ, ھ birbirinden ayrı tutulur. Yalnızca hece başındaki ئ yok sayılır; eski metinlerde ە yerine yazılan ه de eşleşir.
 - **Latin harfli arama (ULY):** `kitab`, `ürümchide`, `séning` gibi aramalar Arap harfli metinde bulunur.

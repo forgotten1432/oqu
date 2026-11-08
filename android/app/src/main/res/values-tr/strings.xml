@@ -88,4 +88,25 @@
     <string name="days_ago">%1$d gün önce</string>
     <string name="copying">İçe aktarılıyor…</string>
     <string name="search_hint_uyghur">Ara (Uygurca veya Latin: kitab)</string>
+    <string name="fill_sign">Doldur ve İmzala</string>
+    <string name="add_text">Metin</string>
+    <string name="signature">İmza</string>
+    <string name="use_saved_signature">Kayıtlı imzayı kullan</string>
+    <string name="draw_signature">İmzanızı parmağınızla çizin</string>
+    <string name="clear">Temizle</string>
+    <string name="date">Tarih</string>
+    <string name="whiteout">Örtme</string>
+    <string name="saved">Kaydedildi</string>
+    <string name="edit_failed">PDF kaydedilemedi</string>
+    <string name="rotate_page">Sayfayı döndür</string>
+    <string name="delete_page">Sayfayı sil</string>
+    <string name="delete_page_confirm">%1$d. sayfa bu PDF\'ten silinsin mi?</string>
+    <string name="print">Yazdır</string>
+    <string name="unsaved_title">Kaydedilmemiş değişiklikler</string>
+    <string name="unsaved_body">Eklediğiniz metin, imza ve işaretler PDF\'e kaydedilsin mi?</string>
+    <string name="discard">Vazgeç</string>
+    <string name="place_hint">Koymak istediğiniz yere dokunun, sonra sürükleyerek ayarlayın</string>
+    <string name="whiteout_hint">Örtülecek alanın üzerinden sürükleyin</string>
+    <string name="language">Dil</string>
+    <string name="lang_system">Sistem dili</string>
 </resources>

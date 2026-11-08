@@ -11,9 +11,9 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::mpsc::{channel, sync_channel, Sender};
 use std::sync::{Arc, Mutex, OnceLock};
 
-struct State {
-    pdfium: &'static Pdfium,
-    docs: HashMap<u64, PdfDocument<'static>>,
+pub(crate) struct State {
+    pub(crate) pdfium: &'static Pdfium,
+    pub(crate) docs: HashMap<u64, PdfDocument<'static>>,
 }
 
 type Job = Box<dyn FnOnce(&mut State) + Send>;
@@ -21,7 +21,7 @@ type Job = Box<dyn FnOnce(&mut State) + Send>;
 static WORKER: OnceLock<Mutex<Sender<Job>>> = OnceLock::new();
 static NEXT_ID: AtomicU64 = AtomicU64::new(1);
 
-fn pdf_err(e: PdfiumError) -> ReaderError {
+pub(crate) fn pdf_err(e: PdfiumError) -> ReaderError {
     match e {
         PdfiumError::PdfiumLibraryInternalError(PdfiumInternalError::PasswordError) => ReaderError::Password,
         other => ReaderError::Pdf { msg: other.to_string() },
@@ -70,7 +70,7 @@ pub fn pdf_init(library_path: String) -> Result<()> {
     }
 }
 
-fn run<R: Send + 'static>(f: impl FnOnce(&mut State) -> Result<R> + Send + 'static) -> Result<R> {
+pub(crate) fn run<R: Send + 'static>(f: impl FnOnce(&mut State) -> Result<R> + Send + 'static) -> Result<R> {
     let worker = WORKER.get().ok_or(ReaderError::Pdf { msg: "pdf_init was not called".into() })?;
     let (tx, rx) = sync_channel(1);
     let job: Job = Box::new(move |s: &mut State| {
@@ -285,7 +285,7 @@ impl PdfDoc {
         run(move |s| {
             let doc = s.docs.get(&id).ok_or(ReaderError::Closed)?;
             let p = doc.pages().get(page).map_err(pdf_err)?;
-            let (w, h) = (p.width().value, p.height().value);
+            let g = PageGeom::of(&p);
             let mut out = Vec::new();
             for l in p.links().iter() {
                 let Ok(r) = l.rect() else { continue };
@@ -297,7 +297,7 @@ impl PdfDoc {
                 if target_page.is_none() && uri.is_none() {
                     continue;
                 }
-                out.push(PdfLink { rect: norm(&r, w, h), page: target_page, uri });
+                out.push(PdfLink { rect: g.norm(&r), page: target_page, uri });
             }
             Ok(out)
         })
@@ -362,14 +362,14 @@ impl PdfDoc {
         let pt = run(move |s| {
             let doc = s.docs.get(&id).ok_or(ReaderError::Closed)?;
             let p = doc.pages().get(page).map_err(pdf_err)?;
-            let (w, h) = (p.width().value, p.height().value);
+            let g = PageGeom::of(&p);
             let text = p.text().map_err(pdf_err)?;
             let mut chars = Vec::new();
             let mut boxes = Vec::new();
             for ch in text.chars().iter() {
                 let Some(c) = ch.unicode_char() else { continue };
                 chars.push(c);
-                boxes.push(ch.loose_bounds().ok().filter(|r| r.width().value > 0.0 || c.is_whitespace()).map(|r| norm(&r, w, h)));
+                boxes.push(ch.loose_bounds().ok().filter(|r| r.width().value > 0.0 || c.is_whitespace()).map(|r| g.norm(&r)));
             }
             let (chars, boxes) = crate::pdf_layout::reconstruct(&chars, &boxes);
             Ok(PageText { chars, boxes })
@@ -386,14 +386,68 @@ impl Drop for PdfDoc {
     }
 }
 
-fn norm(r: &PdfRect, w: f32, h: f32) -> NormRect {
-    let w = if w <= 0.0 { 1.0 } else { w };
-    let h = if h <= 0.0 { 1.0 } else { h };
-    NormRect {
-        left: (r.left().value / w).clamp(0.0, 1.0),
-        right: (r.right().value / w).clamp(0.0, 1.0),
-        top: (1.0 - r.top().value / h).clamp(0.0, 1.0),
-        bottom: (1.0 - r.bottom().value / h).clamp(0.0, 1.0),
+/// Maps between PDF content space (points, origin bottom-left, unrotated)
+/// and the normalized display space the UI uses (0..1, origin top-left, with
+/// the page's /Rotate applied).
+pub(crate) struct PageGeom {
+    /// Unrotated content width/height.
+    pub w: f32,
+    pub h: f32,
+    /// Clockwise quarter turns.
+    pub rot: i32,
+}
+
+impl PageGeom {
+    pub fn of(p: &PdfPage) -> Self {
+        let rot = match p.rotation() {
+            Ok(PdfPageRenderRotation::Degrees90) => 1,
+            Ok(PdfPageRenderRotation::Degrees180) => 2,
+            Ok(PdfPageRenderRotation::Degrees270) => 3,
+            _ => 0,
+        };
+        let (dw, dh) = (p.width().value.max(1.0), p.height().value.max(1.0));
+        // width()/height() report the displayed (rotated) size
+        let (w, h) = if rot % 2 == 1 { (dh, dw) } else { (dw, dh) };
+        PageGeom { w, h, rot }
+    }
+
+    /// Content point -> normalized display point.
+    pub fn to_display(&self, x: f32, y: f32) -> (f32, f32) {
+        let (xn, yn) = (x / self.w, y / self.h);
+        match self.rot {
+            1 => (yn, xn),
+            2 => (1.0 - xn, yn),
+            3 => (1.0 - yn, 1.0 - xn),
+            _ => (xn, 1.0 - yn),
+        }
+    }
+
+    /// Normalized display point -> content point.
+    pub fn to_content(&self, u: f32, v: f32) -> (f32, f32) {
+        match self.rot {
+            1 => (v * self.w, u * self.h),
+            2 => ((1.0 - u) * self.w, v * self.h),
+            3 => ((1.0 - v) * self.w, (1.0 - u) * self.h),
+            _ => (u * self.w, (1.0 - v) * self.h),
+        }
+    }
+
+    pub fn norm(&self, r: &PdfRect) -> NormRect {
+        let (u0, v0) = self.to_display(r.left().value, r.bottom().value);
+        let (u1, v1) = self.to_display(r.right().value, r.top().value);
+        NormRect {
+            left: u0.min(u1).clamp(0.0, 1.0),
+            right: u0.max(u1).clamp(0.0, 1.0),
+            top: v0.min(v1).clamp(0.0, 1.0),
+            bottom: v0.max(v1).clamp(0.0, 1.0),
+        }
+    }
+
+    /// Display rect -> axis-aligned content rect.
+    pub fn content_rect(&self, n: &NormRect) -> PdfRect {
+        let (x0, y0) = self.to_content(n.left, n.top);
+        let (x1, y1) = self.to_content(n.right, n.bottom);
+        PdfRect::new_from_values(y0.min(y1), x0.min(x1), y0.max(y1), x0.max(x1))
     }
 }
 

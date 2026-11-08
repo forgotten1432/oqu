@@ -21,6 +21,22 @@ import kotlinx.coroutines.launch
 import uniffi.reader_core.LibraryEntry
 
 class MainActivity : ComponentActivity() {
+    /** Applies the in-app language. Layout direction follows it automatically:
+     *  Uyghur/Arabic -> right-to-left, Turkish/English -> left-to-right. */
+    override fun attachBaseContext(base: android.content.Context) {
+        super.attachBaseContext(base)
+        val tag = runCatching { Core.setting("app_lang", "") }.getOrDefault("")
+        if (tag.isBlank()) return
+        val locale = java.util.Locale.forLanguageTag(tag)
+        java.util.Locale.setDefault(locale)
+        // Override only the locale; the Activity keeps its own context, which
+        // system services such as printing require.
+        applyOverrideConfiguration(android.content.res.Configuration().apply {
+            setLocale(locale)
+            setLayoutDirection(locale)
+        })
+    }
+
     private var current by mutableStateOf<LibraryEntry?>(null)
     private var importing by mutableStateOf(false)
     private var appTheme by mutableStateOf("system")
@@ -41,6 +57,7 @@ class MainActivity : ComponentActivity() {
                         onOpenEntry = { current = Core.library.touch(it.path, it.displayName) },
                         appTheme = appTheme,
                         onAppTheme = { appTheme = it; Core.setSetting("app_theme", it) },
+                        onLanguage = { tag -> Core.setSetting("app_lang", tag); recreate() },
                     )
                 } else {
                     BackHandler { current = null }

@@ -685,6 +685,8 @@ internal object IntegrityCheckingUniffiLib {
     ): Int
     external fun uniffi_reader_core_checksum_func_pdf_init(
     ): Int
+    external fun uniffi_reader_core_checksum_func_pdf_save_edits(
+    ): Int
     external fun uniffi_reader_core_checksum_func_locate_in_nodes(
     ): Int
     external fun uniffi_reader_core_checksum_method_doclibrary_add_annotation(
@@ -849,6 +851,8 @@ internal object UniffiLib {
     ): RustBuffer.ByValue
     external fun uniffi_reader_core_fn_func_pdf_init(`libraryPath`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
+    external fun uniffi_reader_core_fn_func_pdf_save_edits(`srcPath`: RustBuffer.ByValue,`password`: RustBuffer.ByValue,`outPath`: RustBuffer.ByValue,`edits`: RustBuffer.ByValue,`ops`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
     external fun uniffi_reader_core_fn_func_locate_in_nodes(`nodes`: RustBuffer.ByValue,`query`: RustBuffer.ByValue,`uyghur`: Byte,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun ffi_reader_core_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus, 
@@ -983,6 +987,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_reader_core_checksum_func_pdf_init() and 0xFFFF) != 21771) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_reader_core_checksum_func_pdf_save_edits() and 0xFFFF) != 3944) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_reader_core_checksum_func_locate_in_nodes() and 0xFFFF) != 46166) {
@@ -3211,6 +3218,52 @@ public object FfiConverterTypePageSize: FfiConverterRustBuffer<PageSize> {
 
 
 
+data class PdfEdit (
+    var `page`: kotlin.Int
+    , 
+    /**
+     * Normalized to the page, origin top-left (same space as search hits).
+     */
+    var `rect`: NormRect
+    , 
+    var `kind`: PdfEditKind
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypePdfEdit: FfiConverterRustBuffer<PdfEdit> {
+    override fun read(buf: ByteBuffer): PdfEdit {
+        return PdfEdit(
+            FfiConverterInt.read(buf),
+            FfiConverterTypeNormRect.read(buf),
+            FfiConverterTypePdfEditKind.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: PdfEdit) = (
+            FfiConverterInt.allocationSize(value.`page`) +
+            FfiConverterTypeNormRect.allocationSize(value.`rect`) +
+            FfiConverterTypePdfEditKind.allocationSize(value.`kind`)
+    )
+
+    override fun write(value: PdfEdit, buf: ByteBuffer) {
+            FfiConverterInt.write(value.`page`, buf)
+            FfiConverterTypeNormRect.write(value.`rect`, buf)
+            FfiConverterTypePdfEditKind.write(value.`kind`, buf)
+    }
+}
+
+
+
 data class PdfInfo (
     var `pageCount`: kotlin.Int
     , 
@@ -3569,6 +3622,241 @@ public object FfiConverterTypeDocFormat: FfiConverterRustBuffer<DocFormat> {
 
     override fun write(value: DocFormat, buf: ByteBuffer) {
         buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
+sealed class PageOp {
+    
+    /**
+     * Clockwise quarter turns added to the page's rotation.
+     */
+    data class Rotate(
+        val `page`: kotlin.Int, 
+        val `quarterTurns`: kotlin.Int) : PageOp()
+        
+    {
+        
+
+        companion object
+    }
+    
+    data class Delete(
+        val `page`: kotlin.Int) : PageOp()
+        
+    {
+        
+
+        companion object
+    }
+    
+
+    
+
+    
+    
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypePageOp : FfiConverterRustBuffer<PageOp>{
+    override fun read(buf: ByteBuffer): PageOp {
+        return when(buf.getInt()) {
+            1 -> PageOp.Rotate(
+                FfiConverterInt.read(buf),
+                FfiConverterInt.read(buf),
+                )
+            2 -> PageOp.Delete(
+                FfiConverterInt.read(buf),
+                )
+            else -> throw RuntimeException("invalid enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: PageOp): ULong = when(value) {
+        is PageOp.Rotate -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterInt.allocationSize(value.`page`)
+                + FfiConverterInt.allocationSize(value.`quarterTurns`)
+            )
+        }
+        is PageOp.Delete -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterInt.allocationSize(value.`page`)
+            )
+        }
+    }
+
+    override fun write(value: PageOp, buf: ByteBuffer) {
+        when(value) {
+            is PageOp.Rotate -> {
+                buf.putInt(1)
+                FfiConverterInt.write(value.`page`, buf)
+                FfiConverterInt.write(value.`quarterTurns`, buf)
+                Unit
+            }
+            is PageOp.Delete -> {
+                buf.putInt(2)
+                FfiConverterInt.write(value.`page`, buf)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+}
+
+
+
+
+
+sealed class PdfEditKind {
+    
+    /**
+     * Straight (non-premultiplied) RGBA pixels, `width*height*4` bytes.
+     */
+    data class Image(
+        val `rgba`: kotlin.ByteArray, 
+        val `width`: kotlin.UInt, 
+        val `height`: kotlin.UInt) : PdfEditKind()
+        
+    {
+        
+
+        companion object
+    }
+    
+    /**
+     * Opaque white rectangle covering existing content.
+     */
+    object WhiteOut : PdfEditKind()
+    
+    
+    /**
+     * Highlight annotation; color is 0xAARRGGBB.
+     */
+    data class Highlight(
+        val `color`: kotlin.UInt) : PdfEditKind()
+        
+    {
+        
+
+        companion object
+    }
+    
+    /**
+     * Sticky-note annotation at the rect's top-left corner.
+     */
+    data class Note(
+        val `text`: kotlin.String, 
+        val `color`: kotlin.UInt) : PdfEditKind()
+        
+    {
+        
+
+        companion object
+    }
+    
+
+    
+
+    
+    
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypePdfEditKind : FfiConverterRustBuffer<PdfEditKind>{
+    override fun read(buf: ByteBuffer): PdfEditKind {
+        return when(buf.getInt()) {
+            1 -> PdfEditKind.Image(
+                FfiConverterByteArray.read(buf),
+                FfiConverterUInt.read(buf),
+                FfiConverterUInt.read(buf),
+                )
+            2 -> PdfEditKind.WhiteOut
+            3 -> PdfEditKind.Highlight(
+                FfiConverterUInt.read(buf),
+                )
+            4 -> PdfEditKind.Note(
+                FfiConverterString.read(buf),
+                FfiConverterUInt.read(buf),
+                )
+            else -> throw RuntimeException("invalid enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: PdfEditKind): ULong = when(value) {
+        is PdfEditKind.Image -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterByteArray.allocationSize(value.`rgba`)
+                + FfiConverterUInt.allocationSize(value.`width`)
+                + FfiConverterUInt.allocationSize(value.`height`)
+            )
+        }
+        is PdfEditKind.WhiteOut -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+            )
+        }
+        is PdfEditKind.Highlight -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterUInt.allocationSize(value.`color`)
+            )
+        }
+        is PdfEditKind.Note -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterString.allocationSize(value.`text`)
+                + FfiConverterUInt.allocationSize(value.`color`)
+            )
+        }
+    }
+
+    override fun write(value: PdfEditKind, buf: ByteBuffer) {
+        when(value) {
+            is PdfEditKind.Image -> {
+                buf.putInt(1)
+                FfiConverterByteArray.write(value.`rgba`, buf)
+                FfiConverterUInt.write(value.`width`, buf)
+                FfiConverterUInt.write(value.`height`, buf)
+                Unit
+            }
+            is PdfEditKind.WhiteOut -> {
+                buf.putInt(2)
+                Unit
+            }
+            is PdfEditKind.Highlight -> {
+                buf.putInt(3)
+                FfiConverterUInt.write(value.`color`, buf)
+                Unit
+            }
+            is PdfEditKind.Note -> {
+                buf.putInt(4)
+                FfiConverterString.write(value.`text`, buf)
+                FfiConverterUInt.write(value.`color`, buf)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
     }
 }
 
@@ -4153,6 +4441,34 @@ public object FfiConverterSequenceTypePageSize: FfiConverterRustBuffer<List<Page
 /**
  * @suppress
  */
+public object FfiConverterSequenceTypePdfEdit: FfiConverterRustBuffer<List<PdfEdit>> {
+    override fun read(buf: ByteBuffer): List<PdfEdit> {
+        val len = buf.getInt()
+        return List<PdfEdit>(len) {
+            FfiConverterTypePdfEdit.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<PdfEdit>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypePdfEdit.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<PdfEdit>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypePdfEdit.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
 public object FfiConverterSequenceTypePdfLink: FfiConverterRustBuffer<List<PdfLink>> {
     override fun read(buf: ByteBuffer): List<PdfLink> {
         val len = buf.getInt()
@@ -4257,6 +4573,34 @@ public object FfiConverterSequenceTypeTocItem: FfiConverterRustBuffer<List<TocIt
             FfiConverterTypeTocItem.write(it, buf)
         }
     }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypePageOp: FfiConverterRustBuffer<List<PageOp>> {
+    override fun read(buf: ByteBuffer): List<PageOp> {
+        val len = buf.getInt()
+        return List<PageOp>(len) {
+            FfiConverterTypePageOp.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<PageOp>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypePageOp.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<PageOp>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypePageOp.write(it, buf)
+        }
+    }
 } fun `coreVersion`(): kotlin.String {
             return FfiConverterString.lift(
     uniffiRustCall() { _status ->
@@ -4319,6 +4663,25 @@ public object FfiConverterSequenceTypeTocItem: FfiConverterRustBuffer<List<TocIt
     
         
         FfiConverterString.lower(`libraryPath`),_status)
+}
+    
+    
+
+        /**
+         * Applies `edits` and `ops` to the PDF at `src_path` and writes `out_path`.
+         * The source file is not modified (`out_path` must differ from it).
+         */
+    @Throws(ReaderException::class) fun `pdfSaveEdits`(`srcPath`: kotlin.String, `password`: kotlin.String?, `outPath`: kotlin.String, `edits`: List<PdfEdit>, `ops`: List<PageOp>)
+        = 
+    uniffiRustCallWithError(ReaderException) { _status ->
+    UniffiLib.uniffi_reader_core_fn_func_pdf_save_edits(
+    
+        
+        FfiConverterString.lower(`srcPath`),
+        FfiConverterOptionalString.lower(`password`),
+        FfiConverterString.lower(`outPath`),
+        FfiConverterSequenceTypePdfEdit.lower(`edits`),
+        FfiConverterSequenceTypePageOp.lower(`ops`),_status)
 }
     
     

@@ -11,6 +11,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -112,7 +113,7 @@ private fun SearchRow(s: SearchUi) {
 
 /** Floating rounded tool bar at the bottom, like Acrobat's quick tools. */
 @Composable
-fun BoxScope.BottomTools(visible: Boolean, content: @Composable RowScope.() -> Unit) {
+fun BoxScope.BottomTools(visible: Boolean, scrollable: Boolean = false, content: @Composable RowScope.() -> Unit) {
     AnimatedVisibility(
         visible, modifier = Modifier.align(Alignment.BottomCenter),
         enter = slideInVertically { it } + fadeIn(), exit = slideOutVertically { it } + fadeOut(),
@@ -122,6 +123,7 @@ fun BoxScope.BottomTools(visible: Boolean, content: @Composable RowScope.() -> U
                 .shadow(8.dp, RoundedCornerShape(28.dp))
                 .clip(RoundedCornerShape(28.dp))
                 .background(MaterialTheme.colorScheme.surface)
+                .then(if (scrollable) Modifier.horizontalScroll(androidx.compose.foundation.rememberScrollState()) else Modifier)
                 .padding(horizontal = 6.dp, vertical = 2.dp),
             verticalAlignment = Alignment.CenterVertically,
             content = content,

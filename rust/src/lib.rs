@@ -13,6 +13,7 @@ uniffi::setup_scaffolding!();
 pub mod library;
 pub mod pdf;
 mod pdf_layout;
+pub mod pdf_edit;
 pub mod reflow;
 pub mod rtl;
 mod util;

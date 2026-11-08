@@ -88,4 +88,25 @@
     <string name="days_ago">%1$d d ago</string>
     <string name="copying">Importing…</string>
     <string name="search_hint_uyghur">Search (Uyghur or Latin: kitab)</string>
+    <string name="fill_sign">Fill &amp; Sign</string>
+    <string name="add_text">Text</string>
+    <string name="signature">Signature</string>
+    <string name="use_saved_signature">Use saved signature</string>
+    <string name="draw_signature">Draw your signature with your finger</string>
+    <string name="clear">Clear</string>
+    <string name="date">Date</string>
+    <string name="whiteout">White-out</string>
+    <string name="saved">Saved</string>
+    <string name="edit_failed">Could not save the PDF</string>
+    <string name="rotate_page">Rotate page</string>
+    <string name="delete_page">Delete page</string>
+    <string name="delete_page_confirm">Delete page %1$d from this PDF?</string>
+    <string name="print">Print</string>
+    <string name="unsaved_title">Unsaved changes</string>
+    <string name="unsaved_body">Save the text, signatures and marks you added into the PDF?</string>
+    <string name="discard">Discard</string>
+    <string name="place_hint">Tap the page where it should go, then drag to adjust</string>
+    <string name="whiteout_hint">Drag over the area to cover</string>
+    <string name="language">Language</string>
+    <string name="lang_system">System default</string>
 </resources>

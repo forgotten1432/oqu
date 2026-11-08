@@ -27,6 +27,7 @@ import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.BorderColor
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material.icons.outlined.Print
 import androidx.compose.material.icons.outlined.TextFields
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -406,6 +407,21 @@ private fun BookReader(s: Session, onClose: () -> Unit) {
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.share)) }, leadingIcon = { Icon(Icons.Outlined.Share, null) },
                         onClick = { menu = false; shareFile(ctx, s.entry.path, mimeFor(s.entry.format)) },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.print)) }, leadingIcon = { Icon(Icons.Outlined.Print, null) },
+                        onClick = {
+                            menu = false
+                            webRef[0]?.let { web ->
+                                printWebView(ctx, web, s.info.title,
+                                    before = {
+                                        web.setBackgroundColor(android.graphics.Color.WHITE)
+                                        js("Reader.apply(${s.settingsJson(prefs.copy(mode = "scroll", theme = "light"))}, false)")
+                                    },
+                                    after = { web.post { applyPrefs(prefs) } },
+                                )
+                            }
+                        },
                     )
                 }
             }

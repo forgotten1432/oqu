@@ -84,6 +84,22 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import uniffi.reader_core.Annotation
+import uniffi.reader_core.PageOp
+import uniffi.reader_core.PdfEdit
+import uniffi.reader_core.PdfEditKind
+import uniffi.reader_core.pdfSaveEdits
+import androidx.activity.compose.BackHandler
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.DeleteOutline
+import androidx.compose.material.icons.outlined.Draw
+import androidx.compose.material.icons.outlined.FormatColorReset
+import androidx.compose.material.icons.outlined.Gesture
+import androidx.compose.material.icons.outlined.Print
+import androidx.compose.material.icons.automirrored.outlined.RotateRight
+import androidx.compose.material.icons.outlined.Save
+import androidx.compose.material.icons.outlined.Title
+import androidx.compose.material.icons.outlined.Today
 import uniffi.reader_core.AnnotationKind
 import uniffi.reader_core.LibraryEntry
 import uniffi.reader_core.NormRect
@@ -109,7 +125,7 @@ private val bitmapCache = object : LruCache<String, Bitmap>((Runtime.getRuntime(
     override fun sizeOf(key: String, value: Bitmap) = value.byteCount
 }
 
-class PdfSession(val doc: PdfDoc, val info: PdfInfo, val entry: LibraryEntry) {
+class PdfSession(val doc: PdfDoc, val info: PdfInfo, val entry: LibraryEntry, val version: Int = 0) {
     private val best = HashMap<Int, Bitmap>()
 
     fun aspect(page: Int): Float {
@@ -117,7 +133,7 @@ class PdfSession(val doc: PdfDoc, val info: PdfInfo, val entry: LibraryEntry) {
         return if (s.width > 0) s.height / s.width else 1.414f
     }
 
-    fun cached(page: Int, w: Int): Bitmap? = bitmapCache.get("${entry.id}:$page@$w")
+    fun cached(page: Int, w: Int): Bitmap? = bitmapCache.get("${entry.id}:v$version:$page@$w")
     fun anyCached(page: Int): Bitmap? = synchronized(best) { best[page]?.takeIf { !it.isRecycled } }
 
     suspend fun render(page: Int, w: Int): Bitmap {
@@ -128,7 +144,7 @@ class PdfSession(val doc: PdfDoc, val info: PdfInfo, val entry: LibraryEntry) {
                 val bytes = doc.renderTile(page, w, h, 0, 0, w, h, true)
                 val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
                 bmp.copyPixelsFromBuffer(ByteBuffer.wrap(bytes))
-                bitmapCache.put("${entry.id}:$page@$w", bmp)
+                bitmapCache.put("${entry.id}:v$version:$page@$w", bmp)
                 synchronized(best) { best[page] = bmp }
                 bmp
             }
@@ -150,7 +166,9 @@ private val invertMatrix = ColorMatrix(
     )
 )
 
-private enum class Tool { None, Highlight, Note }
+private enum class Tool { None, Highlight, Note, Sign }
+
+private val LocalEdit = staticCompositionLocalOf<EditState?> { null }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -160,12 +178,14 @@ fun PdfViewer(entry: LibraryEntry, onClose: () -> Unit) {
     var error by remember { mutableStateOf<String?>(null) }
     var needPassword by remember { mutableStateOf(false) }
     var password by remember { mutableStateOf<String?>(null) }
+    var version by remember { mutableIntStateOf(0) }
 
-    LaunchedEffect(password) {
+    LaunchedEffect(password, version) {
         try {
+            val fresh = Core.library.get(entry.id) ?: entry
             val s = withContext(textDispatcher) {
                 val d = PdfDoc.open(entry.path, password)
-                PdfSession(d, d.info(), entry)
+                PdfSession(d, d.info(), fresh, version)
             }
             Core.library.setMeta(entry.id, s.info.title, s.info.author, s.info.pageCount)
             session = s
@@ -184,7 +204,12 @@ fun PdfViewer(entry: LibraryEntry, onClose: () -> Unit) {
         }
         error != null -> ErrorScreen(error!!, onClose)
         session == null -> LoadingScreen()
-        else -> PdfReader(session!!, onClose)
+        else -> key(version) {
+            PdfReader(session!!, password, onClose, onReload = {
+                session = null
+                version++
+            })
+        }
     }
 }
 
@@ -206,7 +231,7 @@ fun ErrorScreen(msg: String, onClose: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-private fun PdfReader(s: PdfSession, onClose: () -> Unit) {
+private fun PdfReader(s: PdfSession, password: String?, onClose: () -> Unit, onReload: () -> Unit) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     val count = s.info.pageCount
@@ -227,6 +252,69 @@ private fun PdfReader(s: PdfSession, onClose: () -> Unit) {
     var openNote by remember { mutableStateOf<Annotation?>(null) }
     var annotations by remember { mutableStateOf(Core.library.annotations(s.entry.id)) }
     fun reloadAnn() { annotations = Core.library.annotations(s.entry.id) }
+    val edit = remember { EditState() }
+    var saving by remember { mutableStateOf(false) }
+    var textDialog by remember { mutableStateOf(false) }
+    var signDialog by remember { mutableStateOf(false) }
+    var confirmDelete by remember { mutableStateOf(false) }
+    var confirmLeave by remember { mutableStateOf(false) }
+    val savedMsg = stringResource(R.string.saved)
+    val failedMsg = stringResource(R.string.edit_failed)
+
+    /**
+     * Writes pending stamps, the in-app highlights/notes and page operations
+     * into the PDF (via the Rust core), replaces the file and reloads.
+     */
+    fun commit(ops: List<PageOp>, then: () -> Unit = {}) {
+        if (saving) return
+        saving = true
+        scope.launch {
+            val anns = Core.library.annotations(s.entry.id)
+            val embed = anns.filter { it.kind == AnnotationKind.HIGHLIGHT || it.kind == AnnotationKind.NOTE }
+            val edits = mutableListOf<PdfEdit>()
+            for (st in edit.stamps) {
+                val kind = st.bitmap?.let { PdfEditKind.Image(it.toRgba(), it.width.toUInt(), it.height.toUInt()) } ?: PdfEditKind.WhiteOut
+                edits += PdfEdit(st.page, st.rect, kind)
+            }
+            for (a in embed) {
+                val page = a.position.removePrefix("page:").substringBefore(':').toIntOrNull() ?: continue
+                if (a.kind == AnnotationKind.HIGHLIGHT) {
+                    parseRect(a.position)?.let { edits += PdfEdit(page, it, PdfEditKind.Highlight(0xFFFFD54Fu)) }
+                } else {
+                    parsePoint(a.position)?.let { edits += PdfEdit(page, NormRect(it.x, it.y, it.x, it.y), PdfEditKind.Note(a.note ?: "", 0xFFFFC107u)) }
+                }
+            }
+            val src = java.io.File(s.entry.path)
+            val tmp = java.io.File(src.parentFile, ".${src.name}.saving")
+            try {
+                withContext(textDispatcher) { pdfSaveEdits(src.path, password, tmp.path, edits, ops) }
+                s.doc.release()
+                if (!tmp.renameTo(src)) throw java.io.IOException("rename failed")
+                embed.forEach { Core.library.removeAnnotation(it.id) }
+                // keep bookmarks pointing at the right pages after deletions
+                ops.filterIsInstance<PageOp.Delete>().sortedByDescending { it.page }.forEach { del ->
+                    Core.library.annotations(s.entry.id).filter { it.kind == AnnotationKind.BOOKMARK }.forEach { b ->
+                        val p = b.position.removePrefix("page:").toIntOrNull() ?: return@forEach
+                        if (p >= del.page) {
+                            Core.library.removeAnnotation(b.id)
+                            if (p > del.page) Core.library.addAnnotation(s.entry.id, AnnotationKind.BOOKMARK, "page:${p - 1}", b.text, b.note, b.color)
+                        }
+                    }
+                }
+                Core.library.setProgress(s.entry.id, "page:${currentPage.coerceAtMost(max(0, count - 1 - ops.count { it is PageOp.Delete }))}", s.entry.progress)
+                edit.stamps.clear()
+                Toast.makeText(ctx, savedMsg, Toast.LENGTH_SHORT).show()
+                then()
+                onReload()
+            } catch (t: Throwable) {
+                tmp.delete()
+                Toast.makeText(ctx, failedMsg + ": " + (t.message ?: t), Toast.LENGTH_LONG).show()
+            } finally {
+                saving = false
+            }
+        }
+    }
+    BackHandler(enabled = edit.dirty) { confirmLeave = true }
 
     // search
     var searchOpen by remember { mutableStateOf(false) }
@@ -290,6 +378,17 @@ private fun PdfReader(s: PdfSession, onClose: () -> Unit) {
 
     val pageCallbacks = PageCallbacks(
         onTap = { page, pos, sizePx ->
+            if (tool == Tool.Sign) {
+                if (edit.tool == SignTool.Place && edit.pending != null) {
+                    val sz = s.info.sizes.getOrNull(page)
+                    edit.place(page, Offset(pos.x / sizePx.width, pos.y / sizePx.height), sz?.width ?: 612f, sizePx.height / sizePx.width)
+                    edit.tool = SignTool.None
+                    edit.pending = null
+                } else {
+                    edit.selected = null
+                }
+                return@PageCallbacks
+            }
             if (tool == Tool.Note) {
                 noteAt = page to Offset(pos.x / sizePx.width, pos.y / sizePx.height)
                 return@PageCallbacks
@@ -311,6 +410,11 @@ private fun PdfReader(s: PdfSession, onClose: () -> Unit) {
             }
         },
         onHighlight = { page, rect ->
+            if (tool == Tool.Sign) {
+                edit.stamps += Stamp(edit.newId(), page, rect, null)
+                edit.tool = SignTool.None
+                return@PageCallbacks
+            }
             scope.launch {
                 val text = withContext(textDispatcher) { runCatching { s.doc.textInRect(page, rect) }.getOrDefault("") }
                 Core.library.addAnnotation(
@@ -323,7 +427,7 @@ private fun PdfReader(s: PdfSession, onClose: () -> Unit) {
     )
 
     Box(Modifier.fillMaxSize().background(if (night) Color(0xFF111111) else Color(0xFFE6E6E8))) {
-        Column(Modifier.fillMaxSize()) {
+        CompositionLocalProvider(LocalEdit provides edit) { Column(Modifier.fillMaxSize()) {
             // leave room for the bar so the first page isn't hidden
             if (readingMode) {
                 Spacer(Modifier.statusBarsPadding().height(64.dp))
@@ -339,13 +443,21 @@ private fun PdfReader(s: PdfSession, onClose: () -> Unit) {
             } else {
                 ContinuousPages(s, listState, night, pageHits, currentHit, annotations, tool, pageCallbacks)
             }
-        }
+        } }
 
-        if (tool != Tool.None) {
+        if (tool == Tool.Highlight || tool == Tool.Note) {
             Box(Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 64.dp)) {
                 HintBanner(stringResource(if (tool == Tool.Highlight) R.string.highlight_mode_hint else R.string.note_mode_hint)) { tool = Tool.None }
             }
         }
+        if (tool == Tool.Sign && edit.tool != SignTool.None) {
+            Box(Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 64.dp)) {
+                HintBanner(stringResource(if (edit.tool == SignTool.WhiteOut) R.string.whiteout_hint else R.string.place_hint)) {
+                    edit.tool = SignTool.None; edit.pending = null
+                }
+            }
+        }
+        if (saving) LinearProgressIndicator(Modifier.fillMaxWidth().align(Alignment.TopCenter).statusBarsPadding())
 
         PagePill(pillVisible && !readingMode, "${currentPage + 1} / $count") { goTo = true }
 
@@ -375,6 +487,29 @@ private fun PdfReader(s: PdfSession, onClose: () -> Unit) {
                     CheckItem(stringResource(R.string.page_direction_rtl), rtlPages) { rtlPages = it }
                     DropdownMenuItem(text = { Text(stringResource(R.string.go_to_page)) }, onClick = { menu = false; goTo = true })
                     DropdownMenuItem(
+                        text = { Text(stringResource(R.string.annotations)) }, leadingIcon = { Icon(Icons.AutoMirrored.Outlined.Notes, null) },
+                        onClick = { menu = false; sheet = "ann" },
+                    )
+                    HorizontalDivider()
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.rotate_page)) }, leadingIcon = { Icon(Icons.AutoMirrored.Outlined.RotateRight, null) },
+                        onClick = { menu = false; commit(listOf(PageOp.Rotate(currentPage, 1))) },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.delete_page)) }, leadingIcon = { Icon(Icons.Outlined.DeleteOutline, null) },
+                        enabled = count > 1,
+                        onClick = { menu = false; confirmDelete = true },
+                    )
+                    HorizontalDivider()
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.print)) }, leadingIcon = { Icon(Icons.Outlined.Print, null) },
+                        onClick = {
+                            menu = false
+                            if (edit.dirty) commit(emptyList()) { printPdf(ctx, s.entry.path, s.entry.title ?: s.entry.displayName, count) }
+                            else printPdf(ctx, s.entry.path, s.entry.title ?: s.entry.displayName, count)
+                        },
+                    )
+                    DropdownMenuItem(
                         text = { Text(stringResource(R.string.share)) }, leadingIcon = { Icon(Icons.Outlined.Share, null) },
                         onClick = { menu = false; shareFile(ctx, s.entry.path, "application/pdf") },
                     )
@@ -382,7 +517,29 @@ private fun PdfReader(s: PdfSession, onClose: () -> Unit) {
             }
         }
 
-        BottomTools(chrome && !searchOpen) {
+        BottomTools(chrome && !searchOpen && tool == Tool.Sign, scrollable = true) {
+            ToolButton(Icons.Outlined.Title, stringResource(R.string.add_text)) { textDialog = true }
+            ToolButton(Icons.Outlined.Gesture, stringResource(R.string.signature)) { signDialog = true }
+            ToolButton(Icons.Outlined.Today, stringResource(R.string.date)) {
+                val d = java.text.DateFormat.getDateInstance(java.text.DateFormat.MEDIUM, java.util.Locale.getDefault()).format(java.util.Date())
+                edit.pending = renderTextBitmap(d, 0xFF111111.toInt()); edit.pendingWidthPt = 14f * edit.pending!!.width / 128f; edit.tool = SignTool.Place
+            }
+            ToolButton(Icons.Outlined.Check, "✓") {
+                edit.pending = renderTextBitmap("✓", 0xFF111111.toInt(), 160f); edit.pendingWidthPt = 16f; edit.tool = SignTool.Place
+            }
+            ToolButton(Icons.Outlined.Close, "✗") {
+                edit.pending = renderTextBitmap("✗", 0xFF111111.toInt(), 160f); edit.pendingWidthPt = 16f; edit.tool = SignTool.Place
+            }
+            ToolButton(Icons.Outlined.FormatColorReset, stringResource(R.string.whiteout), selected = edit.tool == SignTool.WhiteOut) {
+                edit.tool = if (edit.tool == SignTool.WhiteOut) SignTool.None else SignTool.WhiteOut
+            }
+            ToolButton(Icons.Outlined.Save, stringResource(R.string.save)) { commit(emptyList()) { tool = Tool.None } }
+            ToolButton(Icons.Outlined.Close, stringResource(R.string.done)) {
+                if (edit.dirty) confirmLeave = true else tool = Tool.None
+            }
+        }
+
+        BottomTools(chrome && !searchOpen && tool != Tool.Sign) {
             ToolButton(Icons.AutoMirrored.Filled.List, stringResource(R.string.outline)) { sheet = "outline" }
             ToolButton(Icons.Outlined.GridView, stringResource(R.string.thumbnails)) { sheet = "thumbs" }
             ToolButton(Icons.Outlined.BorderColor, stringResource(R.string.highlight), selected = tool == Tool.Highlight) {
@@ -399,7 +556,10 @@ private fun PdfReader(s: PdfSession, onClose: () -> Unit) {
                 else Core.library.addAnnotation(s.entry.id, AnnotationKind.BOOKMARK, "page:$currentPage", null, null, 0u)
                 reloadAnn()
             }
-            ToolButton(Icons.AutoMirrored.Outlined.Notes, stringResource(R.string.annotations)) { sheet = "ann" }
+            ToolButton(Icons.Outlined.Draw, stringResource(R.string.fill_sign)) {
+                tool = Tool.Sign
+                readingMode = false
+            }
         }
 
         if (sheet != null) {
@@ -414,6 +574,28 @@ private fun PdfReader(s: PdfSession, onClose: () -> Unit) {
             }
         }
         if (goTo) GoToPageDialog(count, onGo = ::jump, onDismiss = { goTo = false })
+        if (textDialog) TextStampDialog(onDone = { t, c ->
+            textDialog = false
+            edit.pending = renderTextBitmap(t, c); edit.pendingWidthPt = 12f * edit.pending!!.width / 128f; edit.tool = SignTool.Place
+        }, onDismiss = { textDialog = false })
+        if (signDialog) SignaturePadDialog(onDone = { bmp ->
+            signDialog = false
+            edit.pending = bmp; edit.pendingWidthPt = 150f; edit.tool = SignTool.Place
+        }, onDismiss = { signDialog = false })
+        if (confirmDelete) AlertDialog(
+            onDismissRequest = { confirmDelete = false },
+            title = { Text(stringResource(R.string.delete_page)) },
+            text = { Text(stringResource(R.string.delete_page_confirm, currentPage + 1)) },
+            confirmButton = { TextButton(onClick = { confirmDelete = false; commit(listOf(PageOp.Delete(currentPage))) }) { Text(stringResource(R.string.delete)) } },
+            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.cancel)) } },
+        )
+        if (confirmLeave) AlertDialog(
+            onDismissRequest = { confirmLeave = false },
+            title = { Text(stringResource(R.string.unsaved_title)) },
+            text = { Text(stringResource(R.string.unsaved_body)) },
+            confirmButton = { TextButton(onClick = { confirmLeave = false; commit(emptyList()) { tool = Tool.None } }) { Text(stringResource(R.string.save)) } },
+            dismissButton = { TextButton(onClick = { confirmLeave = false; edit.stamps.clear(); edit.tool = SignTool.None; tool = Tool.None }) { Text(stringResource(R.string.discard)) } },
+        )
         linkUri?.let { LinkDialog(it, ctx) { linkUri = null } }
         noteAt?.let { (page, p) ->
             NoteDialog(onSave = { text ->
@@ -587,8 +769,10 @@ private fun PageView(
     val pageAnn = remember(annotations, page) { annotations.filter { it.position.startsWith("page:$page:") } }
     var dragRect by remember { mutableStateOf<Rect?>(null) }
 
-    val gestures = when (tool) {
-        Tool.Highlight -> Modifier.pointerInput(tool, page) {
+    val edit = LocalEdit.current
+    val dragTool = tool == Tool.Highlight || (tool == Tool.Sign && edit?.tool == SignTool.WhiteOut)
+    val gestures = when {
+        dragTool -> Modifier.pointerInput(tool, page, edit?.tool) {
             var start = Offset.Zero
             detectDragGestures(
                 onDragStart = { start = it; dragRect = Rect(it, it) },
@@ -606,7 +790,7 @@ private fun PageView(
                 onDragCancel = { dragRect = null },
             )
         }
-        else -> Modifier.pointerInput(tool, page) {
+        else -> Modifier.pointerInput(tool, page, edit?.tool) {
             detectTapGestures(
                 onTap = { cb.onTap(page, it, Size(size.width.toFloat(), size.height.toFloat())) },
                 onDoubleTap = { onDoubleTap() },
@@ -652,6 +836,7 @@ private fun PageView(
                 drawRect(Color(0x55FFD54F), Offset(min(d.left, d.right), min(d.top, d.bottom)), Size(kotlin.math.abs(d.width), kotlin.math.abs(d.height)))
             }
         }
+        if (edit != null) StampLayer(edit, page)
         if (annotations.any { it.kind == AnnotationKind.BOOKMARK && it.position == "page:$page" }) {
             Icon(Icons.Filled.Bookmark, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.align(Alignment.TopEnd).padding(6.dp).size(22.dp))
         }

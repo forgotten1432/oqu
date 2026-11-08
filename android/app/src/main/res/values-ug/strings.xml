@@ -88,4 +88,25 @@
     <string name="days_ago">%1$d كۈن بۇرۇن</string>
     <string name="copying">ئەكىرىلىۋاتىدۇ…</string>
     <string name="search_hint_uyghur">ئىزدەش (ئۇيغۇرچە ياكى لاتىنچە: kitab)</string>
+    <string name="fill_sign">تولدۇرۇش ۋە ئىمزا</string>
+    <string name="add_text">تېكىست</string>
+    <string name="signature">ئىمزا</string>
+    <string name="use_saved_signature">ساقلانغان ئىمزانى ئىشلىتىش</string>
+    <string name="draw_signature">ئىمزايىڭىزنى بارمىقىڭىز بىلەن سىزىڭ</string>
+    <string name="clear">تازىلاش</string>
+    <string name="date">چېسلا</string>
+    <string name="whiteout">يېپىش</string>
+    <string name="saved">ساقلاندى</string>
+    <string name="edit_failed">PDF نى ساقلىغىلى بولمىدى</string>
+    <string name="rotate_page">بەتنى ئايلاندۇرۇش</string>
+    <string name="delete_page">بەتنى ئۆچۈرۈش</string>
+    <string name="delete_page_confirm">%1$d-بەتنى بۇ PDF دىن ئۆچۈرەمسىز؟</string>
+    <string name="print">بېسىپ چىقىرىش</string>
+    <string name="unsaved_title">ساقلانمىغان ئۆزگىرىشلەر</string>
+    <string name="unsaved_body">قوشقان تېكىست، ئىمزا ۋە بەلگىلەرنى PDF قا ساقلامسىز؟</string>
+    <string name="discard">تاشلىۋېتىش</string>
+    <string name="place_hint">قويماقچى بولغان يەرنى چېكىپ، ئاندىن سۆرەپ تەڭشەڭ</string>
+    <string name="whiteout_hint">يېپىلىدىغان دائىرىنىڭ ئۈستىدىن سۆرەڭ</string>
+    <string name="language">تىل</string>
+    <string name="lang_system">سىستېما تىلى</string>
 </resources>

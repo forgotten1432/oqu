@@ -88,4 +88,25 @@
     <string name="days_ago">قبل %1$d ي</string>
     <string name="copying">جارٍ الاستيراد…</string>
     <string name="search_hint_uyghur">بحث (بالأويغورية أو اللاتينية: kitab)</string>
+    <string name="fill_sign">تعبئة وتوقيع</string>
+    <string name="add_text">نص</string>
+    <string name="signature">توقيع</string>
+    <string name="use_saved_signature">استخدام التوقيع المحفوظ</string>
+    <string name="draw_signature">ارسم توقيعك بإصبعك</string>
+    <string name="clear">مسح</string>
+    <string name="date">التاريخ</string>
+    <string name="whiteout">تغطية</string>
+    <string name="saved">تم الحفظ</string>
+    <string name="edit_failed">تعذّر حفظ ملف PDF</string>
+    <string name="rotate_page">تدوير الصفحة</string>
+    <string name="delete_page">حذف الصفحة</string>
+    <string name="delete_page_confirm">حذف الصفحة %1$d من هذا الملف؟</string>
+    <string name="print">طباعة</string>
+    <string name="unsaved_title">تغييرات غير محفوظة</string>
+    <string name="unsaved_body">هل تريد حفظ النصوص والتواقيع والعلامات المضافة في ملف PDF؟</string>
+    <string name="discard">تجاهل</string>
+    <string name="place_hint">اضغط على مكانه في الصفحة ثم اسحب لضبطه</string>
+    <string name="whiteout_hint">اسحب فوق المنطقة لتغطيتها</string>
+    <string name="language">اللغة</string>
+    <string name="lang_system">لغة النظام</string>
 </resources>

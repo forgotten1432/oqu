@@ -58,6 +58,7 @@ fun HomeScreen(
     onOpenEntry: (LibraryEntry) -> Unit,
     appTheme: String,
     onAppTheme: (String) -> Unit,
+    onLanguage: (String) -> Unit = {},
 ) {
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var searching by rememberSaveable { mutableStateOf(false) }
@@ -123,7 +124,7 @@ fun HomeScreen(
             when (tab) {
                 0 -> RecentTab(query, refresh, onOpenEntry) { refresh++ }
                 1 -> FilesTab(onPick = { picker.launch(OPEN_MIME) })
-                else -> SettingsTab(appTheme, onAppTheme)
+                else -> SettingsTab(appTheme, onAppTheme, onLanguage)
             }
             if (importing) {
                 LinearProgressIndicator(Modifier.fillMaxWidth().align(Alignment.TopCenter))
@@ -262,12 +263,23 @@ private fun FilesTab(onPick: () -> Unit) {
 }
 
 @Composable
-private fun SettingsTab(appTheme: String, onAppTheme: (String) -> Unit) {
+private fun SettingsTab(appTheme: String, onAppTheme: (String) -> Unit, onLanguage: (String) -> Unit) {
     var fonts by remember { mutableStateOf(Core.userFonts()) }
     val fontPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let { Core.importFont(it); fonts = Core.userFonts() }
     }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
+        Text(stringResource(R.string.language), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+        Spacer(Modifier.height(8.dp))
+        val lang = remember { Core.setting("app_lang", "") }
+        @OptIn(ExperimentalLayoutApi::class)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            // Endonyms, so everyone can find their language whatever the UI is set to.
+            listOf("" to stringResource(R.string.lang_system), "ug" to "ئۇيغۇرچە", "tr" to "Türkçe", "en" to "English", "ar" to "العربية").forEach { (tag, label) ->
+                FilterChip(selected = lang == tag, onClick = { if (lang != tag) onLanguage(tag) }, label = { Text(label) })
+            }
+        }
+        Spacer(Modifier.height(24.dp))
         Text(stringResource(R.string.app_theme), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
         Spacer(Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
