@@ -31,6 +31,13 @@ Uygurca ve sağdan sola (RTL) yazılar için Android belge okuyucu. Çekirdeği 
 - **Kitaplar (EPUB, Word vb.):** Yatay ekranda iki sütun gösterilir. Metin ayarlarından seçilir: "Yan çevirince", "Her zaman" veya "Hiçbir zaman".
   - Sağdan sola kitaplarda metin sağ sütunda başlar.
 
+## Otomatik güncelleme
+- **Kontrol:** Uygulama günde bir kez (internet varken) GitHub'daki son sürüme bakar. Yeni sürüm varsa telefona bildirim gelir.
+- **Açılışta:** Uygulama açıldığında "Yeni sürüm" penceresi değişiklik notlarıyla gösterilir.
+- **Güncelle:** Cihazın işlemcisine uygun APK (çoğu cihazda arm64) uygulamanın içinde indirilir. SHA-256 sağlama toplamı sürümdeki listeyle karşılaştırılır ve Android'in kurulum ekranı açılır. İlk seferde Android, uygulamaya güncelleme yükleme izni verilmesini ister.
+- **Ayarlar:** "Güncellemeleri otomatik kontrol et" anahtarı ve "Şimdi kontrol et" butonu Ayarlar sekmesinde.
+- **İnternet kullanımı:** Yalnızca `api.github.com` ve GitHub'ın sürüm dosyalarına bağlanılır. Belgeler hiçbir yere gönderilmez.
+
 ## Okuma ayarları (kitaplar)
 - **Erişim:** Üst çubuktaki **Aa** butonu yazı tipini, yazı boyutunu ve arka planı tek dokunuşla açar.
 - **Temalar:** Açık, Sepya, Yeşil, Gece kâğıdı, Koyu ve Siyah. Koyu temalarda uygulamanın çubukları ve pencereleri de koyulaşır.

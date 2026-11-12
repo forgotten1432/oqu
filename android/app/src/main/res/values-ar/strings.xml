@@ -118,4 +118,18 @@
     <string name="two_col_off">أبدًا</string>
     <string name="theme_green">أخضر</string>
     <string name="theme_night">ورق ليلي</string>
+    <string name="updates">التحديثات</string>
+    <string name="auto_check_updates">التحقق من التحديثات تلقائيًا</string>
+    <string name="check_updates">تحقق الآن</string>
+    <string name="version_n">الإصدار %1$s</string>
+    <string name="up_to_date">لديك أحدث إصدار (%1$s)</string>
+    <string name="update_available_title">إصدار جديد: %1$s</string>
+    <string name="update_now">تحديث</string>
+    <string name="install">تثبيت</string>
+    <string name="later">لاحقًا</string>
+    <string name="downloading">جارٍ التنزيل…</string>
+    <string name="update_failed">تعذّر تنزيل التحديث</string>
+    <string name="allow_install_hint">اسمح لهذا التطبيق بتثبيت التحديثات في الشاشة التي فُتحت، ثم عُد واضغط تثبيت.</string>
+    <string name="update_notification_title">%2$s %1$s متاح</string>
+    <string name="update_notification_body">اضغط لرؤية الجديد والتحديث</string>
 </resources>

@@ -118,4 +118,18 @@
     <string name="two_col_off">ھەرگىز</string>
     <string name="theme_green">يېشىل</string>
     <string name="theme_night">كېچە قەغىزى</string>
+    <string name="updates">يېڭىلاش</string>
+    <string name="auto_check_updates">يېڭىلانمىلارنى ئاپتوماتىك تەكشۈرۈش</string>
+    <string name="check_updates">ھازىر تەكشۈرۈش</string>
+    <string name="version_n">نەشرى %1$s</string>
+    <string name="up_to_date">ئەڭ يېڭى نەشرىنى ئىشلىتىۋاتىسىز (%1$s)</string>
+    <string name="update_available_title">يېڭى نەشرى: %1$s</string>
+    <string name="update_now">يېڭىلاش</string>
+    <string name="install">قاچىلاش</string>
+    <string name="later">كېيىن</string>
+    <string name="downloading">چۈشۈرۈلۈۋاتىدۇ…</string>
+    <string name="update_failed">يېڭىلانمىنى چۈشۈرگىلى بولمىدى</string>
+    <string name="allow_install_hint">ئېچىلغان ئېكراندا بۇ ئەپكە يېڭىلانما قاچىلاش ئىجازىتى بېرىڭ، ئاندىن قايتىپ «قاچىلاش» نى بېسىڭ.</string>
+    <string name="update_notification_title">%2$s %1$s ئېلان قىلىندى</string>
+    <string name="update_notification_body">يېڭىلىقلارنى كۆرۈش ۋە يېڭىلاش ئۈچۈن چېكىڭ</string>
 </resources>

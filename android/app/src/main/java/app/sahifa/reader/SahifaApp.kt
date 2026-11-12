@@ -7,5 +7,6 @@ class SahifaApp : Application() {
     override fun onCreate() {
         super.onCreate()
         Core.init(this)
+        app.sahifa.reader.core.Updater.schedule(this)
     }
 }

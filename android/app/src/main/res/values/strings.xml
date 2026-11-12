@@ -118,4 +118,18 @@
     <string name="two_col_off">Never</string>
     <string name="theme_green">Green</string>
     <string name="theme_night">Night paper</string>
+    <string name="updates">Updates</string>
+    <string name="auto_check_updates">Check for updates automatically</string>
+    <string name="check_updates">Check now</string>
+    <string name="version_n">Version %1$s</string>
+    <string name="up_to_date">You have the latest version (%1$s)</string>
+    <string name="update_available_title">New version: %1$s</string>
+    <string name="update_now">Update</string>
+    <string name="install">Install</string>
+    <string name="later">Later</string>
+    <string name="downloading">Downloading…</string>
+    <string name="update_failed">Update could not be downloaded</string>
+    <string name="allow_install_hint">Allow this app to install updates in the screen that opened, then come back and tap Install.</string>
+    <string name="update_notification_title">%2$s %1$s is available</string>
+    <string name="update_notification_body">Tap to see what\'s new and update</string>
 </resources>

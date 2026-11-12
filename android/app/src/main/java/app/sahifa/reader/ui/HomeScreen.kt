@@ -68,6 +68,7 @@ fun HomeScreen(
     appTheme: String,
     onAppTheme: (String) -> Unit,
     onLanguage: (String) -> Unit = {},
+    onCheckUpdate: () -> Unit = {},
 ) {
     var tab by rememberSaveable { mutableIntStateOf(0) }
     val wide = isWideScreen()
@@ -152,7 +153,7 @@ fun HomeScreen(
                 when (tab) {
                     0 -> RecentTab(query, refresh, wide, onOpenEntry) { refresh++ }
                     1 -> Centered(wide) { FilesTab(onPick = { picker.launch(OPEN_MIME) }) }
-                    else -> Centered(wide) { SettingsTab(appTheme, onAppTheme, onLanguage) }
+                    else -> Centered(wide) { SettingsTab(appTheme, onAppTheme, onLanguage, onCheckUpdate) }
                 }
                 if (importing) {
                     LinearProgressIndicator(Modifier.fillMaxWidth().align(Alignment.TopCenter))
@@ -378,7 +379,7 @@ private fun FilesTab(onPick: () -> Unit) {
 }
 
 @Composable
-private fun SettingsTab(appTheme: String, onAppTheme: (String) -> Unit, onLanguage: (String) -> Unit) {
+private fun SettingsTab(appTheme: String, onAppTheme: (String) -> Unit, onLanguage: (String) -> Unit, onCheckUpdate: () -> Unit) {
     var fonts by remember { mutableStateOf(Core.userFonts()) }
     val fontPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let { Core.importFont(it); fonts = Core.userFonts() }
@@ -410,6 +411,26 @@ private fun SettingsTab(appTheme: String, onAppTheme: (String) -> Unit, onLangua
             Icon(Icons.Outlined.FontDownload, null)
             Spacer(Modifier.width(8.dp))
             Text(stringResource(R.string.import_font))
+        }
+        Spacer(Modifier.height(24.dp))
+        Text(stringResource(R.string.updates), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+        Spacer(Modifier.height(4.dp))
+        val ctx = LocalContext.current
+        var auto by remember { mutableStateOf(app.sahifa.reader.core.Updater.autoCheck) }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(R.string.auto_check_updates), Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+            Switch(checked = auto, onCheckedChange = {
+                auto = it
+                app.sahifa.reader.core.Updater.autoCheck = it
+                app.sahifa.reader.core.Updater.schedule(ctx)
+            })
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                stringResource(R.string.version_n, app.sahifa.reader.core.Updater.currentVersion), Modifier.weight(1f),
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            OutlinedButton(onClick = onCheckUpdate) { Text(stringResource(R.string.check_updates)) }
         }
         Spacer(Modifier.height(24.dp))
         Text(stringResource(R.string.about), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
