@@ -116,4 +116,6 @@
     <string name="two_col_auto">عند التدوير</string>
     <string name="two_col_on">دائمًا</string>
     <string name="two_col_off">أبدًا</string>
+    <string name="theme_green">أخضر</string>
+    <string name="theme_night">ورق ليلي</string>
 </resources>

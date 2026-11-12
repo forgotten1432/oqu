@@ -116,4 +116,6 @@
     <string name="two_col_auto">يانغا ئايلاندۇرغاندا</string>
     <string name="two_col_on">ھەمىشە</string>
     <string name="two_col_off">ھەرگىز</string>
+    <string name="theme_green">يېشىل</string>
+    <string name="theme_night">كېچە قەغىزى</string>
 </resources>

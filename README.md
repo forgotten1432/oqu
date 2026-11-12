@@ -31,6 +31,13 @@ Uygurca ve sağdan sola (RTL) yazılar için Android belge okuyucu. Çekirdeği 
 - **Kitaplar (EPUB, Word vb.):** Yatay ekranda iki sütun gösterilir. Metin ayarlarından seçilir: "Yan çevirince", "Her zaman" veya "Hiçbir zaman".
   - Sağdan sola kitaplarda metin sağ sütunda başlar.
 
+## Okuma ayarları (kitaplar)
+- **Erişim:** Üst çubuktaki **Aa** butonu yazı tipini, yazı boyutunu ve arka planı tek dokunuşla açar.
+- **Temalar:** Açık, Sepya, Yeşil, Gece kâğıdı, Koyu ve Siyah. Koyu temalarda uygulamanın çubukları ve pencereleri de koyulaşır.
+- **Yazı boyutu:** A− / A+ butonları ya da kaydırıcıyla ayarlanır.
+- **Yazı tipleri:** Her seçenek kendi yazı tipiyle gösterilir. UKIJ Tuz/Ekran/Basma, Naskh, Vazirmatn, Amiri, Nastaliq, Hebrew ve içe aktarılan fontlar var.
+- **Diğer:** Satır aralığı, kenar boşluğu, iki yana yaslama, yazı yönü, sayfalı veya kaydırmalı düzen.
+
 ## Tablet görünümü
 Ekran genişliği 600dp'yi geçince (tabletler, katlanabilir telefonlar) uygulama telefondan farklı görünür:
 - **Ana ekran:** Gezinme çubuğu yanda durur. Belgeler kapak resimli bir ızgarada gösterilir: PDF'lerde ilk sayfa, EPUB/FB2/CBZ'de kitabın kendi kapağı.

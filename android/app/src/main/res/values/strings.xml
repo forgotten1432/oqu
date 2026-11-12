@@ -116,4 +116,6 @@
     <string name="two_col_auto">When sideways</string>
     <string name="two_col_on">Always</string>
     <string name="two_col_off">Never</string>
+    <string name="theme_green">Green</string>
+    <string name="theme_night">Night paper</string>
 </resources>

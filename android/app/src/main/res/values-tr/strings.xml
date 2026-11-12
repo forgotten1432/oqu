@@ -116,4 +116,6 @@
     <string name="two_col_auto">Yan çevirince</string>
     <string name="two_col_on">Her zaman</string>
     <string name="two_col_off">Hiçbir zaman</string>
+    <string name="theme_green">Yeşil</string>
+    <string name="theme_night">Gece kâğıdı</string>
 </resources>

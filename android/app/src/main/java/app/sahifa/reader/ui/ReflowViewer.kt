@@ -10,6 +10,12 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -105,10 +111,28 @@ private data class ThemeColors(val fg: String, val bg: String, val link: String,
 
 private fun themeColors(t: String) = when (t) {
     "sepia" -> ThemeColors("#5b4636", "#f4ecd8", "#8c3b14", true, Color(0xFFF4ECD8))
+    "green" -> ThemeColors("#25331f", "#dcebd2", "#2f6b2a", true, Color(0xFFDCEBD2))
+    // warm, low-glare "night paper": dark brown page with soft cream text
+    "night" -> ThemeColors("#d9cbb2", "#2a241d", "#e0a35a", true, Color(0xFF2A241D))
     "dark" -> ThemeColors("#dcdcdc", "#1e1f22", "#ff8a80", true, Color(0xFF1E1F22))
     "black" -> ThemeColors("#c8c8c8", "#000000", "#ff8a80", true, Color.Black)
     else -> ThemeColors("#1b1b1b", "#ffffff", "#b3261e", false, Color.White)
 }
+
+/** Reading themes, in the order shown to the user. */
+private val READING_THEMES = listOf(
+    "light" to R.string.theme_light, "sepia" to R.string.theme_sepia, "green" to R.string.theme_green,
+    "night" to R.string.theme_night, "dark" to R.string.theme_dark, "black" to R.string.theme_black,
+)
+
+fun isDarkReadingTheme(t: String) = t == "night" || t == "dark" || t == "black"
+
+/** Asset file behind each built-in font choice (for previews in the picker). */
+private val FONT_FILES = mapOf(
+    "ukij_tuz" to "UKIJTuz.ttf", "ukij_ekran" to "UKIJEkran.ttf", "ukij_basma" to "UKIJTuzB.ttf",
+    "naskh" to "NotoNaskhArabic.ttf", "vazirmatn" to "Vazirmatn.ttf", "amiri" to "Amiri-Regular.ttf",
+    "nastaliq" to "NotoNastaliqUrdu.ttf", "hebrew" to "NotoSansHebrew.ttf",
+)
 
 /** Built-in font choices: key -> CSS font-family. */
 private val FONTS = linkedMapOf(
@@ -227,14 +251,23 @@ fun ReflowViewer(entry: LibraryEntry, onClose: () -> Unit) {
     when {
         error != null -> ErrorScreen(error!!, onClose)
         session == null -> LoadingScreen()
-        else -> BookReader(session!!, onClose)
+        else -> {
+            // Dark reading themes also darken the app's own bars and panels.
+            var readingTheme by remember { mutableStateOf(session!!.prefs.theme) }
+            // Same composable structure for every theme, so switching light <-> dark
+            // only recolours; it must not recreate the reader (WebView, open sheet).
+            val appTheme = remember { Core.setting("app_theme", "system") }
+            SahifaTheme(if (isDarkReadingTheme(readingTheme)) "dark" else appTheme) {
+                BookReader(session!!, onClose, onTheme = { readingTheme = it })
+            }
+        }
     }
 }
 
 @SuppressLint("SetJavaScriptEnabled")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun BookReader(s: Session, onClose: () -> Unit) {
+private fun BookReader(s: Session, onClose: () -> Unit, onTheme: (String) -> Unit = {}) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     val clipboard = LocalClipboardManager.current
@@ -291,6 +324,7 @@ private fun BookReader(s: Session, onClose: () -> Unit) {
 
     fun applyPrefs(p: ReaderPrefs) {
         prefs = p; s.prefs = p; p.save()
+        onTheme(p.theme)
         webRef[0]?.setBackgroundColor(themeColors(p.theme).bgColor.toArgb())
         js("window.Reader && Reader.apply(${s.settingsJson(p)});")
     }
@@ -472,6 +506,10 @@ private fun BookReader(s: Session, onClose: () -> Unit) {
                 onClose = { searchOpen = false; hits = emptyList(); query = ""; js("Reader.clearFind()") },
             ) else null,
         ) {
+            // Always-visible "Aa": font, size and background are one tap away.
+            IconButton(onClick = { sheet = "text" }) {
+                Text("Aa", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold, textDirection = TextDirection.Ltr))
+            }
             IconButton(onClick = { searchOpen = true }) { Icon(Icons.Filled.Search, stringResource(R.string.search)) }
             Box {
                 IconButton(onClick = { menu = true }) { Icon(Icons.Filled.MoreVert, stringResource(R.string.more)) }
@@ -566,39 +604,85 @@ private fun TocSheet(s: Session, current: Int, onGo: (TocItem) -> Unit) {
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun TextSettingsSheet(p: ReaderPrefs, fixed: Boolean, onChange: (ReaderPrefs) -> Unit) {
+    val ctx = LocalContext.current
     Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 32.dp)) {
         if (!fixed) {
-            Label(stringResource(R.string.font_size) + "  ${p.fs}px")
-            Slider(value = p.fs.toFloat(), onValueChange = { onChange(p.copy(fs = it.toInt())) }, valueRange = 12f..36f, steps = 23)
-            Label(stringResource(R.string.line_spacing) + "  ${"%.1f".format(p.lh)}")
-            Slider(value = p.lh, onValueChange = { onChange(p.copy(lh = (it * 10).toInt() / 10f)) }, valueRange = 1.1f..2.6f)
-            Label(stringResource(R.string.margins) + "  ${p.margin}px")
-            Slider(value = p.margin.toFloat(), onValueChange = { onChange(p.copy(margin = it.toInt())) }, valueRange = 4f..64f)
-
+            // 1. Background / theme: big swatches previewing page and text colour
             Label(stringResource(R.string.theme))
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("light" to R.string.theme_light, "sepia" to R.string.theme_sepia, "dark" to R.string.theme_dark, "black" to R.string.theme_black).forEach { (k, r) ->
-                    FilterChip(selected = p.theme == k, onClick = { onChange(p.copy(theme = k)) }, label = { Text(stringResource(r)) })
+            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                READING_THEMES.forEach { (k, r) ->
+                    val tc = themeColors(k)
+                    val selected = p.theme == k
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.clickable { onChange(p.copy(theme = k)) }) {
+                        Box(
+                            Modifier.size(56.dp).clip(CircleShape).background(tc.bgColor)
+                                .border(if (selected) 3.dp else 1.dp, if (selected) MaterialTheme.colorScheme.primary else Color(0x33000000), CircleShape),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text("Aa", color = Color(android.graphics.Color.parseColor(tc.fg)), fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
+                        }
+                        Text(
+                            stringResource(r), style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 4.dp),
+                            color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                        )
+                    }
                 }
             }
+
+            // 2. Text size with A− / A+
+            Label(stringResource(R.string.font_size) + "  ${p.fs}")
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                FilledTonalIconButton(onClick = { onChange(p.copy(fs = (p.fs - 1).coerceAtLeast(12))) }) { Text("A−", fontSize = 13.sp) }
+                Slider(
+                    value = p.fs.toFloat(), onValueChange = { onChange(p.copy(fs = it.toInt())) },
+                    valueRange = 12f..40f, modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
+                )
+                FilledTonalIconButton(onClick = { onChange(p.copy(fs = (p.fs + 1).coerceAtMost(40))) }) { Text("A+", fontSize = 19.sp) }
+            }
+
+            // 3. Fonts, each shown in its own typeface
             Label(stringResource(R.string.font))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                val names = mapOf("ukij_tuz" to "UKIJ Tuz", "ukij_ekran" to "UKIJ Ekran", "ukij_basma" to "UKIJ Basma", "book" to stringResource(R.string.font_book), "naskh" to "نسخ Naskh", "vazirmatn" to "وزیرمتن Vazirmatn", "amiri" to "أميري Amiri", "nastaliq" to "نستعلیق Nastaliq", "hebrew" to "עברית Hebrew", "serif" to "Serif", "sans" to "Sans")
-                FONTS.keys.forEach { k -> FilterChip(selected = p.font == k, onClick = { onChange(p.copy(font = k)) }, label = { Text(names[k] ?: k) }) }
+                val names = mapOf(
+                    "book" to stringResource(R.string.font_book), "ukij_tuz" to "UKIJ Tuz", "ukij_ekran" to "UKIJ Ekran", "ukij_basma" to "UKIJ Basma",
+                    "naskh" to "Naskh نسخ", "vazirmatn" to "Vazirmatn", "amiri" to "Amiri أميري", "nastaliq" to "Nastaliq نستعلیق",
+                    "hebrew" to "Hebrew עברית", "serif" to "Serif", "sans" to "Sans",
+                )
+                FONTS.keys.forEach { k ->
+                    val family = remember(k) {
+                        when {
+                            k == "serif" -> FontFamily.Serif
+                            k == "sans" -> FontFamily.SansSerif
+                            FONT_FILES[k] != null -> runCatching { FontFamily(Font("fonts/${FONT_FILES[k]}", ctx.assets)) }.getOrNull()
+                            else -> null
+                        }
+                    }
+                    FilterChip(
+                        selected = p.font == k, onClick = { onChange(p.copy(font = k)) },
+                        label = { Text(names[k] ?: k, fontFamily = family, fontSize = 15.sp) },
+                    )
+                }
                 Core.userFonts().forEach { f ->
                     val k = "user:$f"
-                    FilterChip(selected = p.font == k, onClick = { onChange(p.copy(font = k)) }, label = { Text(f.substringBeforeLast('.')) })
+                    val family = remember(f) { runCatching { FontFamily(Font(java.io.File(Core.fontsDir, f))) }.getOrNull() }
+                    FilterChip(selected = p.font == k, onClick = { onChange(p.copy(font = k)) }, label = { Text(f.substringBeforeLast('.'), fontFamily = family) })
                 }
+            }
+
+            // 4. Spacing
+            Label(stringResource(R.string.line_spacing) + "  ${"%.1f".format(p.lh)}")
+            Slider(value = p.lh, onValueChange = { onChange(p.copy(lh = (it * 10).toInt() / 10f)) }, valueRange = 1.1f..2.6f)
+            Label(stringResource(R.string.margins) + "  ${p.margin}")
+            Slider(value = p.margin.toFloat(), onValueChange = { onChange(p.copy(margin = it.toInt())) }, valueRange = 4f..64f)
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
+                Text(stringResource(R.string.justify), Modifier.weight(1f))
+                Switch(checked = p.justify, onCheckedChange = { onChange(p.copy(justify = it)) })
             }
             Label(stringResource(R.string.direction))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf("auto" to stringResource(R.string.dir_auto), "rtl" to "RTL ←", "ltr" to "LTR →").forEach { (k, l) ->
                     FilterChip(selected = p.dir == k, onClick = { onChange(p.copy(dir = k)) }, label = { Text(l) })
                 }
-            }
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
-                Text(stringResource(R.string.justify), Modifier.weight(1f))
-                Switch(checked = p.justify, onCheckedChange = { onChange(p.copy(justify = it)) })
             }
         }
         Label(stringResource(R.string.layout))
@@ -608,7 +692,6 @@ private fun TextSettingsSheet(p: ReaderPrefs, fixed: Boolean, onChange: (ReaderP
         }
         if (!fixed && p.mode == "paged") {
             Label(stringResource(R.string.two_columns))
-            @OptIn(ExperimentalLayoutApi::class)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf("auto" to R.string.two_col_auto, "on" to R.string.two_col_on, "off" to R.string.two_col_off).forEach { (k, r) ->
                     FilterChip(selected = p.spread == k, onClick = { onChange(p.copy(spread = k)) }, label = { Text(stringResource(r)) })
