@@ -92,6 +92,8 @@ cd android && ./gradlew assembleDebug  # veya assembleRelease
 Sürüm imzası `~/.android/oqu-keystore.properties` dosyasından okunur. Dosya yoksa debug anahtarı kullanılır.
 Masaüstü testi: `cd rust && cargo test && cargo run --example smoke -- <libpdfium> <dosyalar>`
 
-**Yayınlama:** `./release.sh` Rust çekirdeğini ve APK'ları derler, yayın anahtarıyla imzalar, `SHA256SUMS.txt` dosyasını üretir, `vX.Y.Z` etiketini gönderir ve notları `RELEASE_NOTES.md` dosyasından alarak GitHub Release'i oluşturur. Önce taslak olarak oluşturmak için `./release.sh --draft`. Gerekenler: yukarıdaki derleme araçları, yayın anahtarı ve oturum açılmış GitHub CLI (`gh auth login`).
+**Yayınlama (GitHub'da):** GitHub'da **Actions → Release → Run workflow**. APK'lar GitHub'ın sunucusunda derlenip imzalanır ve Release oluşturulur. Varsayılan olarak taslak oluşturulur, sonra GitHub'da yayınlanır. Bir kerelik kurulum: depo ayarlarında (Settings → Secrets and variables → Actions) `OQU_KEYSTORE_BASE64`, `OQU_STORE_PASSWORD`, `OQU_KEY_ALIAS` ve `OQU_KEY_PASSWORD` gizli değerlerini ekle.
+
+**Yayınlama (yerelde):** `./release.sh` Rust çekirdeğini ve APK'ları derler, yayın anahtarıyla imzalar, `SHA256SUMS.txt` dosyasını üretir, `vX.Y.Z` etiketini gönderir ve notları `RELEASE_NOTES.md` dosyasından alarak GitHub Release'i oluşturur. Önce taslak olarak oluşturmak için `./release.sh --draft`. Gerekenler: yukarıdaki derleme araçları, yayın anahtarı ve oturum açılmış GitHub CLI (`gh auth login`).
 
 Fontlar: UKIJ (Uygur Bilgisayar Bilimi Derneği; OFL-1.1 veya LGPL-3), SIL OFL 1.1: Noto Naskh Arabic, Noto Nastaliq Urdu, Noto Sans Hebrew, Vazirmatn, Amiri.
