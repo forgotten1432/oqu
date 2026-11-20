@@ -5,10 +5,12 @@
 - Okuma sırasında WebView çökerse uygulama kapanmıyor, aynı uyarı ekranı gösteriliyor.
 
 **Hangi APK'yı indirmeliyim?**
-- `oqu-0.3.2-arm64-v8a.apk`: çoğu güncel telefon (önerilen)
-- `oqu-0.3.2-armeabi-v7a.apk`: eski 32 bit telefonlar
-- `oqu-0.3.2-x86_64.apk`: emülatörler ve Chromebook'lar
-- `oqu-0.3.2-universal.apk`: tüm cihazlar (daha büyük)
+- **`oqu-0.3.2-arm64-v8a.apk`** ⭐: çoğu telefon ve tablet, Android 17 dahil (önerilen)
+- `oqu-0.3.2-universal.apk`: emin değilsen; her cihazda çalışır ama daha büyük
+- `oqu-0.3.2-old-32bit-armeabi-v7a.apk`: yalnızca çok eski 32 bit telefonlar; yeni cihazlar bunu kurmaz
+- `oqu-0.3.2-x86_64.apk`: emülatör ve Chromebook
+
+0.3.1 veya üstü yüklüyse güncelleme uygulama içinden gelir.
 
 Android 8.0 veya üstü gerekir.
 
