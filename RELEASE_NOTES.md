@@ -35,4 +35,4 @@ Uygurca ve sağdan sola yazılar için Android belge okuyucu. Çekirdeği Rust i
 - `oqu-0.1.0-x86_64.apk`: emülatörler ve Chromebook'lar
 - `oqu-0.1.0-universal.apk`: tüm cihazlar (daha büyük)
 
-Android 8.0 veya üstü gerekir. Uygulama internet izni istemez.
+Android 8.0 veya üstü gerekir. Bu sürüm internet izni istemez. 0.3.1 ile gelen güncelleme kontrolünden beri uygulama interneti yalnızca GitHub'dan yeni sürümü denetleyip indirmek için kullanır; belgeler cihazdan çıkmaz.
