@@ -10,6 +10,12 @@ Uygurca ve sağdan sola (RTL) yazılar için Android belge okuyucu. Çekirdeği 
 | PDF | **PDFium** (Chromium, `pdfium-render` 0.9.5 + chromium/8125 ikilileri) | Chrome/Android ile aynı motor, BSD/Apache lisansı, kararlı ve hızlı. MuPDF bir tık daha hızlı olabilir ama AGPL lisanslı ve Rust'tan Android'e derlemesi zor. |
 | EPUB, DOCX, ODT, FB2, HTML, TXT, MD, CBZ | Rust ayrıştırıcıları → temizlenmiş (X)HTML → **Android WebView (Blink + HarfBuzz + ICU)** | Arapça/Farsça/Urduca/İbranice için en iyi şekillendirme ve bidi desteği bu. |
 
+## Android System WebView sorunları
+PDF dışındaki kitaplar telefondaki **Android System WebView** ile gösterilir. WebView yüklü değilse, kapalıysa ya da güncellemesi bozuk olduğu için sürümü cihazla uyuşmuyorsa, 0.3.2'den beri uygulama çökmüyor; bunun yerine bir uyarı ekranı çıkıyor. Okuma sırasında WebView çökerse de uygulama kapanmıyor, aynı ekran gösteriliyor.
+- **WebView'i güncelle** düğmesi, telefondaki WebView'in Play Store sayfasını açar. WebView'i ve Chrome'u birlikte güncel sürüme getir.
+- Sorun yeni bir güncellemeden sonra başladıysa: Ayarlar → Uygulamalar → *Android System WebView* (veya *Google Chrome*) → ⋮ → **Güncellemeleri kaldır**.
+- PDF'ler WebView kullanmaz; bu durumda da açılır.
+
 ## Düzenleme, imza ve yazdırma
 - **Doldur ve İmzala (PDF):**
   - Ekleyebileceklerin: metin, parmakla çizilen imza (kaydedilir ve tekrar kullanılabilir), tarih, ✓ / ✗ ve beyazla örtme.
