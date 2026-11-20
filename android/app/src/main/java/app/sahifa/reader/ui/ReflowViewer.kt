@@ -349,6 +349,8 @@ private fun BookReader(s: Session, onClose: () -> Unit, onTheme: (String) -> Uni
     var sheet by remember { mutableStateOf<String?>(null) }
     var menu by remember { mutableStateOf(false) }
     var linkUri by remember { mutableStateOf<String?>(null) }
+    // Set when the WebView renderer crashes or is killed; the reader is replaced by an error screen.
+    var rendererGone by remember { mutableStateOf<String?>(null) }
     var annotations by remember { mutableStateOf(Core.library.annotations(s.entry.id)) }
 
     var searchOpen by remember { mutableStateOf(false) }
@@ -452,6 +454,8 @@ private fun BookReader(s: Session, onClose: () -> Unit, onTheme: (String) -> Uni
         }
     }
 
+    rendererGone?.let { WebViewMissingScreen(ctx, it, onClose); return }
+
     Box(Modifier.fillMaxSize().background(themeColors(prefs.theme).bgColor)) {
       Row(Modifier.fillMaxSize()) {
         if (wide && panel != null) {
@@ -509,6 +513,16 @@ private fun BookReader(s: Session, onClose: () -> Unit, onTheme: (String) -> Uni
                             } catch (t: Throwable) {
                                 WebResourceResponse("text/plain", null, 500, "Error", null, ByteArrayInputStream((t.message ?: "").toByteArray()))
                             }
+                        }
+
+                        // Without this, a renderer crash (e.g. a broken or mismatched WebView
+                        // update) takes the whole app down. Returning true keeps the app alive;
+                        // the dead WebView is dropped and destroyed when the error screen replaces it.
+                        override fun onRenderProcessGone(view: WebView, detail: android.webkit.RenderProcessGoneDetail): Boolean {
+                            android.util.Log.e("SahifaWeb", "renderer gone, crashed=${detail.didCrash()}")
+                            if (webRef[0] === view) webRef[0] = null
+                            main.post { rendererGone = if (detail.didCrash()) "WebView renderer crashed" else "WebView renderer was stopped" }
+                            return true
                         }
 
                         override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
