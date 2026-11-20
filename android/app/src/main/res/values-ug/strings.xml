@@ -132,4 +132,7 @@
     <string name="allow_install_hint">ئېچىلغان ئېكراندا بۇ ئەپكە يېڭىلانما قاچىلاش ئىجازىتى بېرىڭ، ئاندىن قايتىپ «قاچىلاش» نى بېسىڭ.</string>
     <string name="update_notification_title">%2$s %1$s ئېلان قىلىندى</string>
     <string name="update_notification_body">يېڭىلىقلارنى كۆرۈش ۋە يېڭىلاش ئۈچۈن چېكىڭ</string>
+    <string name="webview_missing_title">Android System WebView ئىشلەتكىلى بولمايدۇ</string>
+    <string name="webview_missing_body">PDF دىن باشقا كىتابلار Android System WebView ئارقىلىق كۆرسىتىلىدۇ. ئۇ ئورنىتىلمىغان، چەكلەنگەن ياكى نەشرى بۇ ئۈسكۈنىگە ماس كەلمەيدۇ. يېڭىلاڭ ياكى قوزغىتىڭ، ئاندىن قايتا سىناڭ.</string>
+    <string name="webview_update">WebView نى يېڭىلاش</string>
 </resources>

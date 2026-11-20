@@ -132,4 +132,7 @@
     <string name="allow_install_hint">اسمح لهذا التطبيق بتثبيت التحديثات في الشاشة التي فُتحت، ثم عُد واضغط تثبيت.</string>
     <string name="update_notification_title">%2$s %1$s متاح</string>
     <string name="update_notification_body">اضغط لرؤية الجديد والتحديث</string>
+    <string name="webview_missing_title">Android System WebView غير متاح</string>
+    <string name="webview_missing_body">تُعرض الكتب غير PDF باستخدام Android System WebView. إنه غير مثبّت أو معطّل أو إصداره لا يتوافق مع هذا الجهاز. حدّثه أو فعّله ثم أعد المحاولة.</string>
+    <string name="webview_update">تحديث WebView</string>
 </resources>
