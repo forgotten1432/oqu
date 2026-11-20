@@ -61,7 +61,7 @@ android {
         // keep .so files uncompressed + 16 KB aligned inside the APK
         jniLibs.useLegacyPackaging = false
     }
-    androidResources { noCompress += listOf("ttf") }
+    // Fonts stay compressed: ~100 bundled UKIJ fonts are 24 MB raw, ~10 MB compressed.
 }
 
 dependencies {

@@ -5,22 +5,116 @@
 @font-face { font-display: swap; font-family: "Sahifa Nastaliq"; src: url("/__fonts/NotoNastaliqUrdu.ttf"); font-weight: 100 900; }
 @font-face { font-display: swap; font-family: "Sahifa Hebrew"; src: url("/__fonts/NotoSansHebrew.ttf"); font-weight: 100 900; }
 
-/* Uyghur: UKIJ fonts (OFL-1.1). Books often name UKIJ / ALKATIP / Microsoft
-   Uighur fonts that phones don't have; map those names to the bundled UKIJ
-   files so Uyghur books look as their authors intended. */
+/* Uyghur: every UKIJ font is bundled (OFL-1.1 / LGPL-3, see fonts/UKIJ-LICENSE.txt).
+   Generated from the font files' own family names, so books that name a UKIJ
+   font get exactly that font. */
+@font-face { font-display: swap; font-family: "UKIJ 3D"; src: url("/__fonts/UKIJ3D.TTF"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Arabic"; src: url("/__fonts/UKIJArabic.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Basma"; src: url("/__fonts/UKIJBasma.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Bom"; src: url("/__fonts/UKIJBom.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Chechek"; src: url("/__fonts/UKIJChechek.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Chiver Esliye"; src: url("/__fonts/UKIJCE.TTF"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Chiver Kufi"; src: url("/__fonts/UKIJCK.TTF"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Chiwer Kesme"; src: url("/__fonts/UKIJChiK.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ CJK"; src: url("/__fonts/UKIJCJK.TTF"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Diwani"; src: url("/__fonts/UKIJDi.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Diwani Kawak"; src: url("/__fonts/UKIJDiK.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Diwani Tom"; src: url("/__fonts/UKIJDiT.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Diwani Yantu"; src: url("/__fonts/UKIJDiY.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Ekran"; src: url("/__fonts/UKIJEkran.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Elipbe"; src: url("/__fonts/UKIJElipbe.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Elipbe"; src: url("/__fonts/UKIJElipbe-b.ttf"); font-weight: 700; }
+@font-face { font-display: swap; font-family: "UKIJ Elipbe_Chekitlik"; src: url("/__fonts/UKIJElipbeCh.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Elipbe_Chekitlik"; src: url("/__fonts/UKIJElipbeCh-b.ttf"); font-weight: 700; }
+@font-face { font-display: swap; font-family: "UKIJ Esliye"; src: url("/__fonts/UKIJEs.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Esliye"; src: url("/__fonts/UKIJEsBold.ttf"); font-weight: 700; }
+@font-face { font-display: swap; font-family: "UKIJ Esliye Chiwer"; src: url("/__fonts/UKIJEsC.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Esliye Neqish"; src: url("/__fonts/UKIJEsN.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Esliye Qara"; src: url("/__fonts/UKIJEsQ.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Esliye Tom"; src: url("/__fonts/UKIJEsT.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Here"; src: url("/__fonts/UKIJHere.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Imaret"; src: url("/__fonts/UKIJImaret.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Inchike"; src: url("/__fonts/UKIJInichke.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Inchike"; src: url("/__fonts/UKIJInichkeb.ttf"); font-weight: 700; }
+@font-face { font-display: swap; font-family: "UKIJ Jelliy"; src: url("/__fonts/UKIJJe.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Junun"; src: url("/__fonts/UKIJJunu.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Kawak"; src: url("/__fonts/UKIJKa.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Kawak 3D"; src: url("/__fonts/UKIJKa3D.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Kawak 3D"; src: url("/__fonts/UKIJKa3D-b.ttf"); font-weight: 700; }
+@font-face { font-display: swap; font-family: "UKIJ Kesme"; src: url("/__fonts/UKIJKesme.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Kesme"; src: url("/__fonts/UKIJKesme-b.ttf"); font-weight: 700; }
+@font-face { font-display: swap; font-family: "UKIJ Kesme Tuz"; src: url("/__fonts/UKIJKesmeTuz.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Kesme Tuz"; src: url("/__fonts/UKIJKesmeTuz-b.ttf"); font-weight: 700; }
+@font-face { font-display: swap; font-family: "UKIJ Kufi"; src: url("/__fonts/UKIJKu.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Kufi 3D"; src: url("/__fonts/UKIJKu3D.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Kufi Chiwer"; src: url("/__fonts/UKIJKuChi.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Kufi Gul"; src: url("/__fonts/UKIJKuG.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Kufi Kawak"; src: url("/__fonts/UKIJKuKa.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Kufi Tar"; src: url("/__fonts/UKIJKuT.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Kufi Uz"; src: url("/__fonts/UKIJKuU.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Kufi Yay"; src: url("/__fonts/UKIJKuY.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Kufi Yay"; src: url("/__fonts/UKIJKuYB.ttf"); font-weight: 700; }
+@font-face { font-display: swap; font-family: "UKIJ Kufi Yay Tom"; src: url("/__fonts/UKIJKYT.TTF"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Kufi Yolluq"; src: url("/__fonts/UKIJKuYol.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Mejnun"; src: url("/__fonts/UKIJMejn.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Mejnuntal"; src: url("/__fonts/UKIJMejT.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Merdane"; src: url("/__fonts/UKIJMe.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Moy Qelem"; src: url("/__fonts/UKIJMoyQ.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Nasq"; src: url("/__fonts/UKIJNsq.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Nasq"; src: url("/__fonts/UKIJNsqb.ttf"); font-weight: 700; }
+@font-face { font-display: swap; font-family: "UKIJ Nasq Zilwa"; src: url("/__fonts/UKIJNsqZ.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Nasq Zilwa"; src: url("/__fonts/UKIJNsqZB.ttf"); font-weight: 700; }
+@font-face { font-display: swap; font-family: "UKIJ Orqun Yazma"; src: url("/__fonts/UKIJOrqun_Y.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Orxun-Yensey"; src: url("/__fonts/UKIJOrxun.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Qara"; src: url("/__fonts/UKIJQara.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Qara"; src: url("/__fonts/UKIJQara-b.ttf"); font-weight: 700; }
+@font-face { font-display: swap; font-family: "UKIJ Qolyazma"; src: url("/__fonts/UKIJQolyazma.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Qolyazma Tez"; src: url("/__fonts/UKIJQol_Tez.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Qolyazma Tuz"; src: url("/__fonts/UKIJQol_Tuz.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Qolyazma Yantu"; src: url("/__fonts/UKIJQol_Yantu.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Reyhane"; src: url("/__fonts/UKIJRe.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Ruqi"; src: url("/__fonts/UKIJRu.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Ruqi Gul"; src: url("/__fonts/UKIJRuG.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Saet"; src: url("/__fonts/UKIJSaet.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Sulus"; src: url("/__fonts/UKIJSls.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Sulus"; src: url("/__fonts/UKIJSlsBold.ttf"); font-weight: 700; }
+@font-face { font-display: swap; font-family: "UKIJ Sulus Tom"; src: url("/__fonts/UKIJSlsTom.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Teilliq"; src: url("/__fonts/UKIJTe.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Teng"; src: url("/__fonts/UKIJTeng.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Teng"; src: url("/__fonts/UKIJTeng-b.ttf"); font-weight: 700; }
+@font-face { font-display: swap; font-family: "UKIJ Tiken"; src: url("/__fonts/UKIJTiken.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Title"; src: url("/__fonts/UKIJTitle.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Tor"; src: url("/__fonts/UKIJTor.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Tughra"; src: url("/__fonts/UKIJTughra.ttf"); font-weight: 400; }
 @font-face { font-display: swap; font-family: "UKIJ Tuz"; src: url("/__fonts/UKIJTuz.ttf"); font-weight: 400; }
 @font-face { font-display: swap; font-family: "UKIJ Tuz"; src: url("/__fonts/UKIJTuzBold.ttf"); font-weight: 700; }
-@font-face { font-display: swap; font-family: "UKIJ Tuz Tom"; src: url("/__fonts/UKIJTuz.ttf"); font-weight: 400; }
-@font-face { font-display: swap; font-family: "UKIJ Tuz Tom"; src: url("/__fonts/UKIJTuzBold.ttf"); font-weight: 700; }
-@font-face { font-display: swap; font-family: "UKIJ Ekran"; src: url("/__fonts/UKIJEkran.ttf"); }
-@font-face { font-display: swap; font-family: "UKIJ Tuz Basma"; src: url("/__fonts/UKIJTuzB.ttf"); }
-@font-face { font-display: swap; font-family: "UKIJ Basma"; src: url("/__fonts/UKIJTuzB.ttf"); }
-@font-face { font-display: swap; font-family: "UKIJ Esliye"; src: url("/__fonts/UKIJTuz.ttf"); }
-@font-face { font-display: swap; font-family: "UKIJ Qolyazma"; src: url("/__fonts/UKIJTuz.ttf"); }
-@font-face { font-display: swap; font-family: "ALKATIP Basma"; src: url("/__fonts/UKIJTuzB.ttf"); }
-@font-face { font-display: swap; font-family: "ALKATIP Basma Tom"; src: url("/__fonts/UKIJTuzB.ttf"); font-weight: 400 700; }
-@font-face { font-display: swap; font-family: "ALKATIP Tor"; src: url("/__fonts/UKIJTuz.ttf"); }
-@font-face { font-display: swap; font-family: "ALKATIP Tor Tom"; src: url("/__fonts/UKIJTuzBold.ttf"); }
+@font-face { font-display: swap; font-family: "UKIJ Tuz Basma"; src: url("/__fonts/UKIJTuzB.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Tuz Basma"; src: url("/__fonts/UKIJTuzBB.ttf"); font-weight: 700; }
+@font-face { font-display: swap; font-family: "UKIJ Tuz Gezit"; src: url("/__fonts/UKIJTuzG.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Tuz Gezit"; src: url("/__fonts/UKIJTuzGB.ttf"); font-weight: 700; }
+@font-face { font-display: swap; font-family: "UKIJ Tuz Kitab"; src: url("/__fonts/UKIJTuzK.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Tuz Kitab"; src: url("/__fonts/UKIJTuzKB.ttf"); font-weight: 700; }
+@font-face { font-display: swap; font-family: "UKIJ Tuz Neqish"; src: url("/__fonts/UKIJTzNq.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Tuz Qara"; src: url("/__fonts/UKIJTuzQ.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Tuz Qara"; src: url("/__fonts/UKIJTuzQB.ttf"); font-weight: 700; }
+@font-face { font-display: swap; font-family: "UKIJ Tuz Tom"; src: url("/__fonts/UKIJTuT.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Tuz Tor"; src: url("/__fonts/UKIJTzTr.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Tuz Tor"; src: url("/__fonts/UKIJTzTrBold.ttf"); font-weight: 700; }
+@font-face { font-display: swap; font-family: "UKIJ Tuz-a"; src: url("/__fonts/UKIJTu-a.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Tuz-b"; src: url("/__fonts/UKIJTu-b.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Tuz-c"; src: url("/__fonts/UKIJTu-c.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Tuz-d"; src: url("/__fonts/UKIJTuzd.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Uzumzar"; src: url("/__fonts/UKIJUzum.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "UKIJ Zilwa"; src: url("/__fonts/UKIJZilwa.ttf"); font-weight: 400; }
+/* Other Uyghur font names books ask for, mapped to the closest UKIJ font. */
+@font-face { font-display: swap; font-family: "ALKATIP Basma"; src: url("/__fonts/UKIJTuzB.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "ALKATIP Basma"; src: url("/__fonts/UKIJTuzBB.ttf"); font-weight: 700; }
+@font-face { font-display: swap; font-family: "ALKATIP Basma Tom"; src: url("/__fonts/UKIJTuzBB.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "ALKATIP Basma Tom"; src: url("/__fonts/UKIJTuzBB.ttf"); font-weight: 700; }
+@font-face { font-display: swap; font-family: "ALKATIP Tor"; src: url("/__fonts/UKIJTor.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "ALKATIP Tor"; src: url("/__fonts/UKIJTor.ttf"); font-weight: 700; }
+@font-face { font-display: swap; font-family: "ALKATIP Tor Tom"; src: url("/__fonts/UKIJTuzBold.ttf"); font-weight: 400; }
+@font-face { font-display: swap; font-family: "ALKATIP Tor Tom"; src: url("/__fonts/UKIJTuzBold.ttf"); font-weight: 700; }
 @font-face { font-display: swap; font-family: "Microsoft Uighur"; src: url("/__fonts/UKIJTuz.ttf"); font-weight: 400; }
 @font-face { font-display: swap; font-family: "Microsoft Uighur"; src: url("/__fonts/UKIJTuzBold.ttf"); font-weight: 700; }
 

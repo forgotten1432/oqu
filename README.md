@@ -16,6 +16,12 @@ PDF dışındaki kitaplar telefondaki **Android System WebView** ile gösterilir
 - Sorun yeni bir güncellemeden sonra başladıysa: Ayarlar → Uygulamalar → *Android System WebView* (veya *Google Chrome*) → ⋮ → **Güncellemeleri kaldır**.
 - PDF'ler WebView kullanmaz; bu durumda da açılır.
 
+## Cihazdaki belgeler
+- **Dosyalar** sekmesi, telefondaki ve SD karttaki PDF, EPUB, DOCX, ODT, FB2, HTML, MD, TXT ve CBZ dosyalarını otomatik bulup listeler. Sekme her açıldığında liste arka planda yenilenir.
+- Biçime göre süzme ve ada göre arama yapılabilir. Dokunulan belge açılır ve Son açılanlar'a eklenir; dosya kopyalanmaz, yerinde açılır.
+- Bunun için Android 11 ve üstünde **Tüm dosyalara erişim**, Android 8–10'da depolama izni gerekir. Dosyalar yalnızca cihazda okunur, hiçbir yere gönderilmez.
+- Gizli klasörler, `Android/data` ve `Android/obb` taranmaz. Çok küçük TXT/HTML/MD dosyaları (2 KB altı) uygulama artığı sayılıp atlanır.
+
 ## Düzenleme, imza ve yazdırma
 - **Doldur ve İmzala (PDF):**
   - Ekleyebileceklerin: metin, parmakla çizilen imza (kaydedilir ve tekrar kullanılabilir), tarih, ✓ / ✗ ve beyazla örtme.
@@ -66,7 +72,7 @@ Ekran genişliği 600dp'yi geçince (tabletler, katlanabilir telefonlar) uygulam
 - **Arama:** Uygurca belgelerde ى/ي, ې, ە, ۇ/ۆ/ۈ, ۋ, ڭ, ھ birbirinden ayrı tutulur. Yalnızca hece başındaki ئ yok sayılır; eski metinlerde ە yerine yazılan ه de eşleşir.
 - **Latin harfli arama (ULY):** `kitab`, `ürümchide`, `séning` gibi aramalar Arap harfli metinde bulunur.
 - **Dil tanıma:** Etiketi olmayan veya yanlış etiketli (ar/en/fa) Uygurca metinler `lang="ug"` olarak işaretlenir. Böylece şekillendirme ve klavye Uygurcaya göre çalışır.
-- **Fontlar:** UKIJ Tuz, UKIJ Tuz Bold, UKIJ Ekran ve UKIJ Tuz Basma uygulamaya gömülüdür (OFL-1.1). Kitapların istediği ama telefonda olmayan "UKIJ Tuz Tom", "ALKATIP …" ve "Microsoft Uighur" adları bu dosyalara yönlendirilir.
+- **Fontlar:** UKIJ yazı tiplerinin tamamı (79 aile, 98 dosya: Tuz, Ekran, Basma, Kufi, Nasq, Sulus, Diwani, Qolyazma, Tughra, CJK…) uygulamaya gömülüdür (OFL-1.1 / LGPL-3). Kitap hangi UKIJ fontunu isterse o font kullanılır. Telefonda olmayan "ALKATIP …" ve "Microsoft Uighur" adları en yakın UKIJ fontuna yönlendirilir. Okuma ayarlarındaki **Tüm UKIJ fontları** listesinden hepsi seçilebilir.
 - **Arayüz:** Uygurca çeviri (`values-ug`) var.
 
 ## Rust çekirdeği (`rust/`)
@@ -86,4 +92,4 @@ cd android && ./gradlew assembleDebug  # veya assembleRelease
 Sürüm imzası `~/.android/oqu-keystore.properties` dosyasından okunur. Dosya yoksa debug anahtarı kullanılır.
 Masaüstü testi: `cd rust && cargo test && cargo run --example smoke -- <libpdfium> <dosyalar>`
 
-Fontlar (SIL OFL 1.1): UKIJ (Uygur Bilgisayar Bilimi Derneği), Noto Naskh Arabic, Noto Nastaliq Urdu, Noto Sans Hebrew, Vazirmatn, Amiri.
+Fontlar: UKIJ (Uygur Bilgisayar Bilimi Derneği; OFL-1.1 veya LGPL-3), SIL OFL 1.1: Noto Naskh Arabic, Noto Nastaliq Urdu, Noto Sans Hebrew, Vazirmatn, Amiri.

@@ -1,6 +1,7 @@
 package app.sahifa.reader.ui
 
 import android.net.Uri
+import android.os.Build
 import android.text.format.Formatter
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -27,6 +28,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Folder
@@ -49,6 +51,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import app.sahifa.reader.R
 import app.sahifa.reader.core.Core
+import app.sahifa.reader.core.DeviceScan
+import kotlinx.coroutines.launch
 import uniffi.reader_core.LibraryEntry
 
 private val OPEN_MIME = arrayOf(
@@ -69,6 +73,7 @@ fun HomeScreen(
     onAppTheme: (String) -> Unit,
     onLanguage: (String) -> Unit = {},
     onCheckUpdate: () -> Unit = {},
+    onOpenPath: (path: String, name: String) -> Unit = { _, _ -> },
 ) {
     var tab by rememberSaveable { mutableIntStateOf(0) }
     val wide = isWideScreen()
@@ -107,7 +112,7 @@ fun HomeScreen(
                         )
                     },
                     actions = {
-                        if (tab == 0) IconButton(onClick = { searching = true }) { Icon(Icons.Filled.Search, stringResource(R.string.search)) }
+                        if (tab != 2) IconButton(onClick = { searching = true }) { Icon(Icons.Filled.Search, stringResource(R.string.search)) }
                     },
                 )
             }
@@ -152,7 +157,7 @@ fun HomeScreen(
             Box(Modifier.weight(1f).fillMaxHeight()) {
                 when (tab) {
                     0 -> RecentTab(query, refresh, wide, onOpenEntry) { refresh++ }
-                    1 -> Centered(wide) { FilesTab(onPick = { picker.launch(OPEN_MIME) }) }
+                    1 -> Centered(wide) { FilesTab(query, onPick = { picker.launch(OPEN_MIME) }, onOpenPath = onOpenPath) }
                     else -> Centered(wide) { SettingsTab(appTheme, onAppTheme, onLanguage, onCheckUpdate) }
                 }
                 if (importing) {
@@ -351,29 +356,119 @@ private fun relativeTime(ms: Long): String {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun FilesTab(onPick: () -> Unit) {
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
-        ElevatedCard(onClick = onPick, modifier = Modifier.fillMaxWidth()) {
-            Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(48.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
-                    Icon(Icons.Outlined.Folder, null, tint = MaterialTheme.colorScheme.primary)
-                }
-                Spacer(Modifier.width(16.dp))
-                Column {
-                    Text(stringResource(R.string.open_file), style = MaterialTheme.typography.titleMedium)
-                    Text(stringResource(R.string.open_file_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+private fun FilesTab(query: String, onPick: () -> Unit, onOpenPath: (String, String) -> Unit) {
+    val ctx = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var access by remember { mutableStateOf(DeviceScan.hasAccess(ctx)) }
+    val found by DeviceScan.results.collectAsState()
+    val scanning by DeviceScan.scanning.collectAsState()
+    var filter by rememberSaveable { mutableStateOf("") }
+    val storagePermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
+        access = ok
+        if (ok) scope.launch { DeviceScan.scan(ctx) }
+    }
+    fun requestAccess() {
+        if (Build.VERSION.SDK_INT >= 30) {
+            for (i in DeviceScan.allFilesAccessIntents(ctx)) {
+                if (runCatching { ctx.startActivity(i) }.isSuccess) return
+            }
+        } else {
+            storagePermission.launch(android.Manifest.permission.READ_EXTERNAL_STORAGE)
+        }
+    }
+    // Rescan whenever the tab is shown (also right after coming back from the permission screen).
+    LaunchedEffect(Unit) { DeviceScan.loadCached() }
+    LifecycleResumeEffect(Unit) {
+        access = DeviceScan.hasAccess(ctx)
+        if (access) scope.launch { DeviceScan.scan(ctx) }
+        onPauseOrDispose { }
+    }
+
+    val labels = remember(found) { found.map { DeviceScan.FORMATS[it.ext] ?: it.ext.uppercase() }.distinct().sortedBy { l -> DeviceScan.FORMATS.values.indexOf(l) } }
+    val shown = remember(found, filter, query) {
+        found.filter { f ->
+            (filter.isEmpty() || DeviceScan.FORMATS[f.ext] == filter) &&
+                (query.isBlank() || f.name.contains(query.trim(), ignoreCase = true))
+        }
+    }
+
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 96.dp)) {
+        item {
+            ElevatedCard(onClick = onPick, modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.size(48.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
+                        Icon(Icons.Outlined.Folder, null, tint = MaterialTheme.colorScheme.primary)
+                    }
+                    Spacer(Modifier.width(16.dp))
+                    Column {
+                        Text(stringResource(R.string.open_file), style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(R.string.open_file_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
             }
         }
-        Spacer(Modifier.height(24.dp))
-        Text(stringResource(R.string.supported_formats), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
-        Spacer(Modifier.height(12.dp))
-        val formats = listOf("PDF", "EPUB", "DOCX", "ODT", "FB2", "HTML", "MD", "TXT", "CBZ")
-        formats.chunked(5).forEach { row ->
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(bottom = 12.dp)) {
-                row.forEach { FormatBadge(it) }
+        item {
+            Row(Modifier.padding(start = 16.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    stringResource(R.string.device_docs) + if (found.isNotEmpty()) "  (${shown.size})" else "",
+                    style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary, modifier = Modifier.weight(1f),
+                )
+                if (access) {
+                    if (scanning) CircularProgressIndicator(Modifier.padding(12.dp).size(20.dp), strokeWidth = 2.dp)
+                    else IconButton(onClick = { scope.launch { DeviceScan.scan(ctx) } }) { Icon(Icons.Filled.Refresh, stringResource(R.string.rescan)) }
+                }
             }
+        }
+        if (!access) {
+            item {
+                OutlinedCard(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+                    Column(Modifier.padding(16.dp)) {
+                        Text(stringResource(R.string.device_access_body), style = MaterialTheme.typography.bodyMedium)
+                        Spacer(Modifier.height(12.dp))
+                        Button(onClick = { requestAccess() }) { Text(stringResource(R.string.grant_access)) }
+                    }
+                }
+            }
+        } else {
+            if (labels.size > 1) item {
+                FlowRow(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(selected = filter.isEmpty(), onClick = { filter = "" }, label = { Text(stringResource(R.string.all_formats)) })
+                    labels.forEach { l -> FilterChip(selected = filter == l, onClick = { filter = if (filter == l) "" else l }, label = { Text(l) }) }
+                }
+            }
+            if (shown.isEmpty()) item {
+                Text(
+                    stringResource(if (scanning) R.string.scanning else R.string.no_device_docs),
+                    style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(16.dp),
+                )
+            }
+            items(shown, key = { it.path }) { f -> FoundRow(f) { onOpenPath(f.path, f.name) } }
+        }
+    }
+}
+
+@Composable
+private fun FoundRow(f: DeviceScan.Found, onOpen: () -> Unit) {
+    val ctx = LocalContext.current
+    Row(
+        Modifier.fillMaxWidth().clickable(onClick = onOpen).padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        FormatBadge(DeviceScan.FORMATS[f.ext] ?: f.ext.uppercase())
+        Spacer(Modifier.width(14.dp))
+        Column(Modifier.weight(1f)) {
+            Text(
+                f.name, maxLines = 2, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.Medium,
+                style = MaterialTheme.typography.bodyLarge.copy(textDirection = TextDirection.Content),
+            )
+            Text(
+                "${f.folder} • ${Formatter.formatShortFileSize(ctx, f.size)} • ${relativeTime(f.modified)}",
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 }
