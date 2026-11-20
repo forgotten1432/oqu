@@ -14,3 +14,4 @@ android/keystore.properties
 android/app/src/main/jniLibs/
 vendor/
 .DS_Store
+dist/
