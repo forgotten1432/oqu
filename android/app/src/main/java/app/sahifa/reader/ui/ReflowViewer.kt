@@ -151,6 +151,7 @@ private val FONTS = linkedMapOf(
 
 private fun fontCss(key: String): String? = when {
     key.startsWith("user:") -> "'SahifaUser ${key.removePrefix("user:").replace("'", "")}', serif"
+    key.startsWith("ukij:") -> "'${key.removePrefix("ukij:").replace("'", "")}', 'UKIJ Tuz', 'Sahifa Naskh', serif"
     else -> FONTS[key]?.takeIf { it.isNotEmpty() }
 }
 
@@ -738,6 +739,27 @@ private fun TextSettingsSheet(p: ReaderPrefs, fixed: Boolean, onChange: (ReaderP
                     val k = "user:$f"
                     val family = remember(f) { runCatching { FontFamily(Font(java.io.File(Core.fontsDir, f))) }.getOrNull() }
                     FilterChip(selected = p.font == k, onClick = { onChange(p.copy(font = k)) }, label = { Text(f.substringBeforeLast('.'), fontFamily = family) })
+                }
+            }
+
+            // Every bundled UKIJ family; collapsed by default so ~80 previews load only on demand.
+            var allUkij by remember { mutableStateOf(p.font.startsWith("ukij:")) }
+            TextButton(onClick = { allUkij = !allUkij }) {
+                Text(stringResource(R.string.all_ukij_fonts, UKIJ_FAMILIES.size) + if (allUkij) "  ▲" else "  ▼")
+            }
+            if (allUkij) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    UKIJ_FAMILIES.forEach { (name, file) ->
+                        val k = "ukij:$name"
+                        val family = remember(file) {
+                            // UKIJ CJK is ~6 MB; its chip is shown in the default font
+                            if (file == "UKIJCJK.TTF") null else runCatching { FontFamily(Font("fonts/$file", ctx.assets)) }.getOrNull()
+                        }
+                        FilterChip(
+                            selected = p.font == k, onClick = { onChange(p.copy(font = k)) },
+                            label = { Text(name.removePrefix("UKIJ ") + "  ئوقۇ", fontFamily = family, fontSize = 15.sp) },
+                        )
+                    }
                 }
             }
 

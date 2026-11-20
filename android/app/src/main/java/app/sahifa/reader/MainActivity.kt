@@ -90,6 +90,7 @@ class MainActivity : ComponentActivity() {
                         onAppTheme = { appTheme = it; Core.setSetting("app_theme", it) },
                         onLanguage = { tag -> Core.setSetting("app_lang", tag); recreate() },
                         onCheckUpdate = { checkForUpdate(manual = true) },
+                        onOpenPath = { path, name -> current = Core.library.touch(path, name) },
                     )
                 } else {
                     BackHandler { current = null }

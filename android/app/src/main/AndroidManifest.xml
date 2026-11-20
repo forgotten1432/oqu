@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Network is used only to check GitHub Releases for app updates and
          download them; documents never leave the device. -->
@@ -7,6 +8,13 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
+    <!-- Files tab: find the PDFs, EPUBs etc. already on the device. Android 8-10
+         use the storage permission, Android 11+ "All files access". Only read,
+         only on the device; nothing is uploaded. -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
 
     <application
         android:name=".SahifaApp"
@@ -17,6 +25,7 @@
         android:supportsRtl="true"
         android:localeConfig="@xml/locales_config"
         android:largeHeap="true"
+        android:requestLegacyExternalStorage="true"
         android:theme="@style/Theme.Sahifa">
 
         <activity

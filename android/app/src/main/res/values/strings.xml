@@ -135,4 +135,12 @@
     <string name="webview_missing_title">Android System WebView is unavailable</string>
     <string name="webview_missing_body">Books other than PDF are displayed with Android System WebView. It is missing, disabled, or its version does not match this device. Update or enable it, then try again.</string>
     <string name="webview_update">Update WebView</string>
+    <string name="device_docs">Documents on this device</string>
+    <string name="device_access_body">Oqu can find the PDF, EPUB, Word and other documents already on your phone and list them here. This needs access to all files (Android 8–10: storage permission). Files are only read on the device and never uploaded.</string>
+    <string name="grant_access">Allow access</string>
+    <string name="rescan">Scan again</string>
+    <string name="all_formats">All</string>
+    <string name="scanning">Scanning…</string>
+    <string name="no_device_docs">No supported documents found on this device.</string>
+    <string name="all_ukij_fonts">All UKIJ fonts (%1$d)</string>
 </resources>

@@ -135,4 +135,12 @@
     <string name="webview_missing_title">Android System WebView ئىشلەتكىلى بولمايدۇ</string>
     <string name="webview_missing_body">PDF دىن باشقا كىتابلار Android System WebView ئارقىلىق كۆرسىتىلىدۇ. ئۇ ئورنىتىلمىغان، چەكلەنگەن ياكى نەشرى بۇ ئۈسكۈنىگە ماس كەلمەيدۇ. يېڭىلاڭ ياكى قوزغىتىڭ، ئاندىن قايتا سىناڭ.</string>
     <string name="webview_update">WebView نى يېڭىلاش</string>
+    <string name="device_docs">ئۈسكۈنىدىكى ھۆججەتلەر</string>
+    <string name="device_access_body">Oqu تېلېفونىڭىزدىكى PDF، EPUB، Word ۋە باشقا ھۆججەتلەرنى تېپىپ بۇ يەردە كۆرسىتەلەيدۇ. بۇنىڭ ئۈچۈن بارلىق ھۆججەتلەرنى زىيارەت قىلىش ئىجازىتى كېرەك (Android 8–10: ساقلاش ئىجازىتى). ھۆججەتلەر پەقەت ئۈسكۈنىدىلا ئوقۇلىدۇ، ھېچ يەرگە يوللانمايدۇ.</string>
+    <string name="grant_access">ئىجازەت بېرىش</string>
+    <string name="rescan">قايتا ئىزدەش</string>
+    <string name="all_formats">ھەممىسى</string>
+    <string name="scanning">ئىزدەۋاتىدۇ…</string>
+    <string name="no_device_docs">ئۈسكۈنىدە قوللايدىغان ھۆججەت تېپىلمىدى.</string>
+    <string name="all_ukij_fonts">بارلىق UKIJ خەتلىرى (%1$d)</string>
 </resources>
