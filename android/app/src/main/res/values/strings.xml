@@ -132,4 +132,7 @@
     <string name="allow_install_hint">Allow this app to install updates in the screen that opened, then come back and tap Install.</string>
     <string name="update_notification_title">%2$s %1$s is available</string>
     <string name="update_notification_body">Tap to see what\'s new and update</string>
+    <string name="webview_missing_title">Android System WebView is unavailable</string>
+    <string name="webview_missing_body">Books other than PDF are displayed with Android System WebView. It is missing, disabled, or its version does not match this device. Update or enable it, then try again.</string>
+    <string name="webview_update">Update WebView</string>
 </resources>

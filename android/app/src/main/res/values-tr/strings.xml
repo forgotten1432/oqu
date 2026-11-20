@@ -132,4 +132,7 @@
     <string name="allow_install_hint">Açılan ekranda bu uygulamaya güncelleme yükleme izni ver, sonra geri gelip Yükle\'ye bas.</string>
     <string name="update_notification_title">%2$s %1$s yayınlandı</string>
     <string name="update_notification_body">Yenilikleri görmek ve güncellemek için dokun</string>
+    <string name="webview_missing_title">Android Sistem WebView kullanılamıyor</string>
+    <string name="webview_missing_body">PDF dışındaki kitaplar Android Sistem WebView ile gösterilir. WebView yüklü değil, devre dışı ya da sürümü bu cihazla uyuşmuyor. Güncelleyin veya etkinleştirin, sonra tekrar deneyin.</string>
+    <string name="webview_update">WebView\'i güncelle</string>
 </resources>

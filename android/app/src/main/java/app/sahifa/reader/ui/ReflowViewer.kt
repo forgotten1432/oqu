@@ -248,7 +248,13 @@ fun ReflowViewer(entry: LibraryEntry, onClose: () -> Unit) {
         }
     }
     DisposableEffect(Unit) { onDispose { session?.doc?.close() } }
+    val ctx = LocalContext.current
+    // Checked before the reader is built: creating a WebView throws (and used to
+    // crash the app) when the system WebView is missing, disabled or older than
+    // this Android build expects.
+    val webViewError = remember { WebViewCheck.problem(ctx) }
     when {
+        webViewError != null -> WebViewMissingScreen(ctx, webViewError, onClose)
         error != null -> ErrorScreen(error!!, onClose)
         session == null -> LoadingScreen()
         else -> {
@@ -260,6 +266,58 @@ fun ReflowViewer(entry: LibraryEntry, onClose: () -> Unit) {
             SahifaTheme(if (isDarkReadingTheme(readingTheme)) "dark" else appTheme) {
                 BookReader(session!!, onClose, onTheme = { readingTheme = it })
             }
+        }
+    }
+}
+
+/** Probes the system WebView once per process (re-probed after a failure, in case it was updated). */
+private object WebViewCheck {
+    @Volatile private var ok = false
+
+    fun problem(ctx: android.content.Context): String? {
+        if (ok) return null
+        return try {
+            WebView(ctx).destroy()
+            ok = true
+            null
+        } catch (t: Throwable) {
+            android.util.Log.e("SahifaWeb", "WebView unavailable", t)
+            generateSequence(t) { it.cause }.mapNotNull { it.message }.firstOrNull() ?: t.toString()
+        }
+    }
+}
+
+@Composable
+private fun WebViewMissingScreen(ctx: android.content.Context, detail: String, onClose: () -> Unit) {
+    Column(
+        Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(32.dp),
+        verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(stringResource(R.string.webview_missing_title), style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(8.dp))
+        Text(stringResource(R.string.webview_missing_body), style = MaterialTheme.typography.bodyMedium)
+        Spacer(Modifier.height(8.dp))
+        Text(detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.height(16.dp))
+        Button(onClick = { openWebViewStore(ctx) }) { Text(stringResource(R.string.webview_update)) }
+        Spacer(Modifier.height(8.dp))
+        TextButton(onClick = onClose) { Text(stringResource(R.string.back)) }
+    }
+}
+
+/** Opens the store page of the active WebView provider (Android System WebView by default). */
+private fun openWebViewStore(ctx: android.content.Context) {
+    val pkg = (try { androidx.webkit.WebViewCompat.getCurrentWebViewPackage(ctx)?.packageName } catch (_: Throwable) { null })
+        ?: "com.google.android.webview"
+    val intents = listOf(
+        android.content.Intent(android.content.Intent.ACTION_VIEW, Uri.parse("market://details?id=$pkg")),
+        android.content.Intent(android.content.Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$pkg")),
+    )
+    for (i in intents) {
+        try {
+            ctx.startActivity(i.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
+            return
+        } catch (_: android.content.ActivityNotFoundException) {
         }
     }
 }
