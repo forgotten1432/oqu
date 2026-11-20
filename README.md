@@ -11,7 +11,7 @@ Uygurca ve sağdan sola (RTL) yazılar için Android belge okuyucu. Çekirdeği 
 | EPUB, DOCX, ODT, FB2, HTML, TXT, MD, CBZ | Rust ayrıştırıcıları → temizlenmiş (X)HTML → **Android WebView (Blink + HarfBuzz + ICU)** | Arapça/Farsça/Urduca/İbranice için en iyi şekillendirme ve bidi desteği bu. |
 
 ## Android System WebView sorunları
-PDF dışındaki kitaplar telefondaki **Android System WebView** ile gösterilir. WebView yüklü değilse, kapalıysa ya da güncellemesi bozuk olduğu için sürümü cihazla uyuşmuyorsa, 0.3.2'den beri uygulama çökmüyor; bunun yerine bir uyarı ekranı çıkıyor. Okuma sırasında WebView çökerse de uygulama kapanmıyor, aynı ekran gösteriliyor.
+PDF dışındaki kitaplar telefondaki **Android System WebView** ile gösterilir. WebView yüklü değilse, kapalıysa ya da güncellemesi bozuk olduğu için sürümü cihazla uyuşmuyorsa, 0.4.0'dan beri uygulama çökmüyor; bunun yerine bir uyarı ekranı çıkıyor. Okuma sırasında WebView çökerse de uygulama kapanmıyor, aynı ekran gösteriliyor.
 - **WebView'i güncelle** düğmesi, telefondaki WebView'in Play Store sayfasını açar. WebView'i ve Chrome'u birlikte güncel sürüme getir.
 - Sorun yeni bir güncellemeden sonra başladıysa: Ayarlar → Uygulamalar → *Android System WebView* (veya *Google Chrome*) → ⋮ → **Güncellemeleri kaldır**.
 - PDF'ler WebView kullanmaz; bu durumda da açılır.
@@ -91,5 +91,7 @@ cd android && ./gradlew assembleDebug  # veya assembleRelease
 ```
 Sürüm imzası `~/.android/oqu-keystore.properties` dosyasından okunur. Dosya yoksa debug anahtarı kullanılır.
 Masaüstü testi: `cd rust && cargo test && cargo run --example smoke -- <libpdfium> <dosyalar>`
+
+**Yayınlama:** `./release.sh` Rust çekirdeğini ve APK'ları derler, yayın anahtarıyla imzalar, `SHA256SUMS.txt` dosyasını üretir, `vX.Y.Z` etiketini gönderir ve notları `RELEASE_NOTES.md` dosyasından alarak GitHub Release'i oluşturur. Önce taslak olarak oluşturmak için `./release.sh --draft`. Gerekenler: yukarıdaki derleme araçları, yayın anahtarı ve oturum açılmış GitHub CLI (`gh auth login`).
 
 Fontlar: UKIJ (Uygur Bilgisayar Bilimi Derneği; OFL-1.1 veya LGPL-3), SIL OFL 1.1: Noto Naskh Arabic, Noto Nastaliq Urdu, Noto Sans Hebrew, Vazirmatn, Amiri.

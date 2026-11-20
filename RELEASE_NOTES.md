@@ -1,14 +1,24 @@
-## ئوقۇ (Oqu) 0.3.2
+## ئوقۇ (Oqu) 0.4.0
+
+**Yeni: Cihazdaki belgeler**
+- **Dosyalar** sekmesi telefondaki ve SD karttaki PDF, EPUB, Word (DOCX), ODT, FB2, HTML, Markdown, TXT ve CBZ dosyalarını kendiliğinden bulup listeler. Sekme her açıldığında liste yenilenir.
+- Biçime göre süzme (PDF, EPUB…) ve ada göre arama. Dokunduğun belge kopyalanmadan yerinde açılır ve Son açılanlar'a eklenir.
+- İlk seferde izin istenir: Android 11 ve üstünde **Tüm dosyalara erişim**, Android 8–10'da depolama izni. Dosyalar yalnızca cihazda okunur, hiçbir yere gönderilmez.
+
+**Yeni: Bütün UKIJ fontları**
+- 79 UKIJ yazı tipi ailesinin tamamı uygulamaya gömüldü: Tuz, Ekran, Basma, Kufi, Nasq, Sulus, Diwani, Qolyazma, Tughra, CJK ve diğerleri.
+- Kitap hangi UKIJ fontunu isterse o font kullanılır.
+- Okuma ayarlarında **Tüm UKIJ fontları** listesi: her font kendi görünümüyle gösterilir.
 
 **Düzeltmeler**
-- Android System WebView yüklü değilse, kapalıysa ya da sürümü cihazla uyuşmuyorsa PDF dışındaki kitaplar (EPUB, DOCX, FB2…) açılırken uygulama artık çökmüyor. Bunun yerine bir uyarı ekranı çıkıyor. Ekrandaki **WebView'i güncelle** düğmesi, WebView'in Play Store sayfasını açar.
+- Android System WebView yüklü değilse, kapalıysa ya da sürümü cihazla uyuşmuyorsa PDF dışındaki kitaplar açılırken uygulama artık çökmüyor. Bunun yerine bir uyarı ekranı çıkıyor. Ekrandaki **WebView'i güncelle** düğmesi, WebView'in Play Store sayfasını açar.
 - Okuma sırasında WebView çökerse uygulama kapanmıyor, aynı uyarı ekranı gösteriliyor.
 
 **Hangi APK'yı indirmeliyim?**
-- **`oqu-0.3.2-arm64-v8a.apk`** ⭐: çoğu telefon ve tablet, Android 17 dahil (önerilen)
-- `oqu-0.3.2-universal.apk`: emin değilsen; her cihazda çalışır ama daha büyük
-- `oqu-0.3.2-old-32bit-armeabi-v7a.apk`: yalnızca çok eski 32 bit telefonlar; yeni cihazlar bunu kurmaz
-- `oqu-0.3.2-x86_64.apk`: emülatör ve Chromebook
+- **`oqu-0.4.0-arm64-v8a.apk`** ⭐: çoğu telefon ve tablet, Android 17 dahil (önerilen)
+- `oqu-0.4.0-universal.apk`: emin değilsen; her cihazda çalışır ama daha büyük
+- `oqu-0.4.0-old-32bit-armeabi-v7a.apk`: yalnızca çok eski 32 bit telefonlar; yeni cihazlar bunu kurmaz
+- `oqu-0.4.0-x86_64.apk`: emülatör ve Chromebook
 
 0.3.1 veya üstü yüklüyse güncelleme uygulama içinden gelir.
 
