@@ -1,3 +1,17 @@
+## ئوقۇ (Oqu) 0.3.2
+
+**Düzeltmeler**
+- Android System WebView yüklü değilse, kapalıysa ya da sürümü cihazla uyuşmuyorsa PDF dışındaki kitaplar (EPUB, DOCX, FB2…) açılırken uygulama artık çökmüyor. Bunun yerine bir uyarı ekranı çıkıyor. Ekrandaki **WebView'i güncelle** düğmesi, WebView'in Play Store sayfasını açar.
+- Okuma sırasında WebView çökerse uygulama kapanmıyor, aynı uyarı ekranı gösteriliyor.
+
+**Hangi APK'yı indirmeliyim?**
+- `oqu-0.3.2-arm64-v8a.apk`: çoğu güncel telefon (önerilen)
+- `oqu-0.3.2-armeabi-v7a.apk`: eski 32 bit telefonlar
+- `oqu-0.3.2-x86_64.apk`: emülatörler ve Chromebook'lar
+- `oqu-0.3.2-universal.apk`: tüm cihazlar (daha büyük)
+
+Android 8.0 veya üstü gerekir.
+
 ## ئوقۇ (Oqu) 0.1.0 — ilk sürüm
 
 Uygurca ve sağdan sola yazılar için Android belge okuyucu. Çekirdeği Rust ile yazıldı.
