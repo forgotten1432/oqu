@@ -239,6 +239,20 @@ private fun PdfReader(s: PdfSession, password: String?, onClose: () -> Unit, onR
     val startPage = remember { s.entry.position?.removePrefix("page:")?.substringBefore(':')?.toIntOrNull()?.coerceIn(0, max(0, count - 1)) ?: 0 }
 
     var chrome by remember { mutableStateOf(true) }
+    // Status and navigation bars hide with the toolbars (swipe from an edge to peek).
+    val hostView = androidx.compose.ui.platform.LocalView.current
+    val bars = remember(hostView) {
+        var c = hostView.context
+        while (c is android.content.ContextWrapper && c !is android.app.Activity) c = c.baseContext
+        (c as? android.app.Activity)?.window?.let { androidx.core.view.WindowCompat.getInsetsController(it, hostView) }?.apply {
+            systemBarsBehavior = androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        }
+    }
+    LaunchedEffect(chrome) {
+        val t = androidx.core.view.WindowInsetsCompat.Type.systemBars()
+        if (chrome) bars?.show(t) else bars?.hide(t)
+    }
+    DisposableEffect(Unit) { onDispose { bars?.show(androidx.core.view.WindowInsetsCompat.Type.systemBars()) } }
     var night by remember { mutableStateOf(Core.setting("pdf_night", "0") == "1") }
     // View: "continuous" | "single" | "spread" (two pages side by side)
     var viewMode by remember {
@@ -265,10 +279,16 @@ private fun PdfReader(s: PdfSession, password: String?, onClose: () -> Unit, onR
     fun reloadAnn() { annotations = Core.library.annotations(s.entry.id) }
     val edit = remember { EditState() }
     val wide = isWideScreen()
-    // Tablets keep contents / pages / notes in a side panel instead of sheets
-    var panel by rememberSaveable { mutableStateOf<String?>(if (wide) "thumbs" else null) }
+    // Tablets show contents / pages / notes in a side panel instead of sheets.
+    // It starts closed (the page gets the whole screen) and remembers whether
+    // you last left it open.
+    var panel by rememberSaveable { mutableStateOf(if (wide) Core.setting("pdf_panel", "").ifEmpty { null } else null) }
+    fun setPanel(which: String?) {
+        panel = which
+        Core.setSetting("pdf_panel", which ?: "")
+    }
     fun openPanel(which: String) {
-        if (wide) panel = if (panel == which) null else which else sheet = which
+        if (wide) setPanel(if (panel == which) null else which) else sheet = which
     }
     var saving by remember { mutableStateOf(false) }
     var textDialog by remember { mutableStateOf(false) }
@@ -464,7 +484,7 @@ private fun PdfReader(s: PdfSession, password: String?, onClose: () -> Unit, onR
         CompositionLocalProvider(LocalEdit provides edit) { Row(Modifier.fillMaxSize()) {
             if (wide && panel != null && !readingMode) {
                 PdfSidePanel(
-                    s, panel!!, onPanel = { panel = it }, current = currentPage, night = night, annotations = annotations,
+                    s, panel!!, onPanel = { setPanel(it) }, current = currentPage, night = night, annotations = annotations,
                     onJump = ::jump, onDeleteAnn = { Core.library.removeAnnotation(it.id); reloadAnn() },
                 )
             }
@@ -807,7 +827,7 @@ private fun PdfSidePanel(
 ) {
     val tabs = listOf("thumbs" to Icons.Outlined.GridView, "outline" to Icons.AutoMirrored.Filled.List, "ann" to Icons.AutoMirrored.Outlined.Notes)
     Row(Modifier.fillMaxHeight()) {
-        Surface(Modifier.width(300.dp).fillMaxHeight(), color = MaterialTheme.colorScheme.surface) {
+        Surface(Modifier.width(232.dp).fillMaxHeight(), color = MaterialTheme.colorScheme.surface) {
             Column(Modifier.statusBarsPadding().padding(top = 64.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     TabRow(selectedTabIndex = tabs.indexOfFirst { it.first == panel }.coerceAtLeast(0), modifier = Modifier.weight(1f), containerColor = Color.Transparent) {
@@ -861,11 +881,12 @@ private fun SpreadView(
     }
     BoxWithConstraints(
         Modifier.fillMaxSize().clipToBounds()
-            .transformable(ts, canPan = { scale > 1f })
-            .padding(top = 64.dp, bottom = 8.dp, start = 8.dp, end = 8.dp),
+            .transformable(ts, canPan = { scale > 1f }),
         contentAlignment = Alignment.Center,
     ) {
-        val gap = with(LocalDensity.current) { 2.dp.toPx() }
+        // Edge to edge: the bars hide while reading and only overlay the pages
+        // when shown, so the spread gets the whole screen.
+        val gap = with(LocalDensity.current) { 1.dp.toPx() }
         val slotW = (constraints.maxWidth - gap) / 2f
         val maxH = constraints.maxHeight.toFloat()
         // one shared height so facing pages line up like a real book
@@ -875,7 +896,7 @@ private fun SpreadView(
         val lone = pages.size == 1
         Row(
             Modifier.graphicsLayer { scaleX = scale; scaleY = scale; translationX = offset.x; translationY = offset.y },
-            horizontalArrangement = Arrangement.spacedBy(2.dp),
+            horizontalArrangement = Arrangement.spacedBy(1.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             // cover: right-hand page in LTR books, left-hand in RTL (Row mirrors this)
@@ -1023,7 +1044,7 @@ private fun OutlineSheet(s: PdfSession, onGo: (Int) -> Unit) {
 @Composable
 private fun ThumbSheet(s: PdfSession, current: Int, night: Boolean, onGo: (Int) -> Unit) {
     val grid = rememberLazyGridState(initialFirstVisibleItemIndex = current)
-    LazyVerticalGrid(GridCells.Adaptive(104.dp), state = grid, modifier = Modifier.fillMaxHeight(0.92f), contentPadding = PaddingValues(12.dp)) {
+    LazyVerticalGrid(GridCells.Adaptive(92.dp), state = grid, modifier = Modifier.fillMaxHeight(0.92f), contentPadding = PaddingValues(8.dp)) {
         itemsIndexed(List(s.info.pageCount) { it }) { _, page ->
             Column(Modifier.padding(6.dp).clickable { onGo(page) }, horizontalAlignment = Alignment.CenterHorizontally) {
                 var bmp by remember(page) { mutableStateOf(s.cached(page, 256) ?: s.anyCached(page)) }

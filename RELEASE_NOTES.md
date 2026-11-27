@@ -1,5 +1,9 @@
 ## ئوقۇ (Oqu) 0.4.1
 
+**Tablette PDF**
+- Yandaki sayfa paneli artık kendiliğinden açılmıyor; sayfa bütün ekranı kullanıyor. Panel üst çubuktaki **Sayfalar** düğmesiyle açılıp kapanıyor ve son bıraktığın hâli hatırlanıyor. Panel ve küçük resimler de daha dar.
+- İki sayfa yan yana açıldığında sayfalar ekranın tamamını kaplıyor: kenar boşlukları kaldırıldı, okurken durum ve gezinme çubukları gizleniyor. Görmek için ekrana dokun ya da kenardan kaydır.
+
 **Düzeltmeler**
 - Uzun EPUB kitaplar artık açılıyor. Kitabın tamamı tek bir dosyada olduğunda (özellikle dönüştürülmüş kitaplarda sık görülür) ekran uzun süre boş kalıyor ya da WebView kapanıyordu. Büyük bölümler artık arka planda küçük parçalara bölünüyor; her parça bir saniye içinde açılıyor.
 - Aynı düzeltme uzun Word (DOCX), ODT, FB2 ve HTML belgeleri için de geçerli.
