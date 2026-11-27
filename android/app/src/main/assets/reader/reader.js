@@ -14,7 +14,12 @@
   var lastFraction = 0;
 
   function W() { return window.innerWidth || de.clientWidth; }
-  function paged() { return S.mode === 'paged'; }
+  /* The WebView can load the chapter before it has its real size (0 or a few
+     px). Paginating then makes one column per line or even per letter: tens
+     of thousands of columns, and Android kills the renderer for memory. So
+     paged layout waits for a real viewport. */
+  function sizeOk() { return W() >= 100 && window.innerHeight >= 100; }
+  function paged() { return S.mode === 'paged' && sizeOk(); }
   function isRtl() { return getComputedStyle(de).direction === 'rtl'; }
 
   R.apply = function (s, keep) {
@@ -250,7 +255,7 @@
   /* ---------- boot ---------- */
   var started = false;
   function start() {
-    if (started) return;
+    if (started || !sizeOk()) return;
     started = true;
     R.apply(S, false);
     var st = S.start || {};
@@ -262,9 +267,18 @@
       B.onReady(R.pages());
     });
   }
-  function relayout() { if (started) { var f = lastFraction; sizePages(); R.goFraction(f); } }
+  function relayout() {
+    if (!started) { start(); return; }
+    var f = lastFraction;
+    // re-apply: paged mode may only now have become possible
+    R.apply(S, false);
+    R.goFraction(f);
+  }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
   window.addEventListener('load', function () { start(); relayout(); });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(relayout);
   window.addEventListener('resize', function () { setTimeout(relayout, 60); });
+  // in case no resize event arrives once the WebView gets its size
+  var waits = 0;
+  (function waitForSize() { if (!started && waits++ < 200) { start(); if (!started) setTimeout(waitForSize, 50); } })();
 })();

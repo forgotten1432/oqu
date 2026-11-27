@@ -1,3 +1,20 @@
+## ئوقۇ (Oqu) 0.4.2
+
+**Düzeltmeler**
+- EPUB ve diğer kitaplar açılırken çıkan **"WebView renderer was stopped"** hatası giderildi. Asıl sebep WebView değildi: kitap, okuma ekranı daha boyutlanmadan yükleniyordu. O anda sayfalara bölmek binlerce sütun üretiyor, Android de belleği dolan sayfa çiziciyi kapatıyordu. Kitap uzadıkça bu daha sık oluyordu. Artık sayfalama ekran hazır olunca başlıyor.
+- Okuyucu yine de kapanırsa "WebView'i güncelle" yerine **Tekrar dene** düğmesi çıkıyor ve kitap kaldığın yerden yeniden açılıyor.
+- Uyarı ekranlarındaki yazılar koyu temada artık okunabiliyor.
+
+**Hangi APK'yı indirmeliyim?**
+- **`oqu-0.4.2-arm64-v8a.apk`** ⭐: çoğu telefon ve tablet, Android 17 dahil (önerilen)
+- `oqu-0.4.2-universal.apk`: emin değilsen; her cihazda çalışır ama daha büyük
+- `oqu-0.4.2-old-32bit-armeabi-v7a.apk`: yalnızca çok eski 32 bit telefonlar; yeni cihazlar bunu kurmaz
+- `oqu-0.4.2-x86_64.apk`: emülatör ve Chromebook
+
+0.4.1 yüklüyse güncelleme uygulama içinden gelir.
+
+Android 8.0 veya üstü gerekir.
+
 ## ئوقۇ (Oqu) 0.4.1
 
 **Tablette PDF**

@@ -135,6 +135,9 @@
     <string name="webview_missing_title">Android Sistem WebView kullanılamıyor</string>
     <string name="webview_missing_body">PDF dışındaki kitaplar Android Sistem WebView ile gösterilir. WebView yüklü değil, devre dışı ya da sürümü bu cihazla uyuşmuyor. Güncelleyin veya etkinleştirin, sonra tekrar deneyin.</string>
     <string name="webview_update">WebView\'i güncelle</string>
+    <string name="renderer_gone_title">Okuyucu kapandı</string>
+    <string name="renderer_gone_body">Bu kitap gösterilirken Android sayfa çiziciyi kapattı; bu genelde cihazda bellek azaldığında olur. Kaldığın yer korunuyor.</string>
+    <string name="try_again">Tekrar dene</string>
     <string name="device_docs">Cihazdaki belgeler</string>
     <string name="device_access_body">Oqu, telefonundaki PDF, EPUB, Word ve diğer belgeleri bulup burada listeleyebilir. Bunun için tüm dosyalara erişim izni gerekir (Android 8–10: depolama izni). Dosyalar yalnızca cihazda okunur, hiçbir yere gönderilmez.</string>
     <string name="grant_access">İzin ver</string>

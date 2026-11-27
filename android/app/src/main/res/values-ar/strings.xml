@@ -135,6 +135,9 @@
     <string name="webview_missing_title">Android System WebView غير متاح</string>
     <string name="webview_missing_body">تُعرض الكتب غير PDF باستخدام Android System WebView. إنه غير مثبّت أو معطّل أو إصداره لا يتوافق مع هذا الجهاز. حدّثه أو فعّله ثم أعد المحاولة.</string>
     <string name="webview_update">تحديث WebView</string>
+    <string name="renderer_gone_title">أُغلق القارئ</string>
+    <string name="renderer_gone_body">أغلق Android عارض الصفحات أثناء عرض هذا الكتاب، ويحدث هذا عادةً عند انخفاض الذاكرة. موضع قراءتك محفوظ.</string>
+    <string name="try_again">أعد المحاولة</string>
     <string name="device_docs">المستندات على هذا الجهاز</string>
     <string name="device_access_body">يمكن لـ Oqu العثور على ملفات PDF وEPUB وWord وغيرها الموجودة على هاتفك وعرضها هنا. يتطلب ذلك إذن الوصول إلى جميع الملفات (Android 8–10: إذن التخزين). تُقرأ الملفات على الجهاز فقط ولا تُرفع إلى أي مكان.</string>
     <string name="grant_access">السماح بالوصول</string>

@@ -289,14 +289,32 @@ private object WebViewCheck {
 }
 
 @Composable
+private fun RendererGoneScreen(detail: String, onRetry: () -> Unit, onClose: () -> Unit) {
+    Column(
+        Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(32.dp),
+        verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(stringResource(R.string.renderer_gone_title), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
+        Spacer(Modifier.height(8.dp))
+        Text(stringResource(R.string.renderer_gone_body), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onBackground)
+        Spacer(Modifier.height(8.dp))
+        Text(detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.height(16.dp))
+        Button(onClick = onRetry) { Text(stringResource(R.string.try_again)) }
+        Spacer(Modifier.height(8.dp))
+        TextButton(onClick = onClose) { Text(stringResource(R.string.back)) }
+    }
+}
+
+@Composable
 private fun WebViewMissingScreen(ctx: android.content.Context, detail: String, onClose: () -> Unit) {
     Column(
         Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(32.dp),
         verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(stringResource(R.string.webview_missing_title), style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.webview_missing_title), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
         Spacer(Modifier.height(8.dp))
-        Text(stringResource(R.string.webview_missing_body), style = MaterialTheme.typography.bodyMedium)
+        Text(stringResource(R.string.webview_missing_body), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onBackground)
         Spacer(Modifier.height(8.dp))
         Text(detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(16.dp))
@@ -455,7 +473,9 @@ private fun BookReader(s: Session, onClose: () -> Unit, onTheme: (String) -> Uni
         }
     }
 
-    rendererGone?.let { WebViewMissingScreen(ctx, it, onClose); return }
+    // A killed or crashed renderer is not a missing WebView: offer to reopen the
+    // book (the WebView is recreated at the same place) instead of an update.
+    rendererGone?.let { RendererGoneScreen(it, onRetry = { rendererGone = null }, onClose = onClose); return }
 
     Box(Modifier.fillMaxSize().background(themeColors(prefs.theme).bgColor)) {
       Row(Modifier.fillMaxSize()) {
@@ -545,7 +565,10 @@ private fun BookReader(s: Session, onClose: () -> Unit, onTheme: (String) -> Uni
                     s.chapter = chapter
                     s.start = Start.Fraction(fraction)
                     s.userHighlights = userHighlightsFor(chapter)
-                    loadUrl(s.urlFor(chapter))
+                    // Load only once the view has its real size: a chapter laid out in a
+                    // 0-px viewport paginates into thousands of columns and the renderer
+                    // is killed for memory (reader.js also waits, this avoids the work).
+                    whenSized { loadUrl(s.urlFor(chapter)) }
                 }
             },
             onRelease = { it.destroy(); webRef[0] = null },
@@ -799,4 +822,17 @@ private fun TextSettingsSheet(p: ReaderPrefs, fixed: Boolean, onChange: (ReaderP
 @Composable
 private fun Label(t: String) {
     Text(t, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(top = 14.dp, bottom = 4.dp))
+}
+
+/** Runs [block] once the view has a non-zero size (now, if it already has one). */
+private fun android.view.View.whenSized(block: () -> Unit) {
+    if (width > 0 && height > 0) { block(); return }
+    addOnLayoutChangeListener(object : android.view.View.OnLayoutChangeListener {
+        override fun onLayoutChange(v: android.view.View, left: Int, top: Int, right: Int, bottom: Int, oldLeft: Int, oldTop: Int, oldRight: Int, oldBottom: Int) {
+            if (v.width > 0 && v.height > 0) {
+                v.removeOnLayoutChangeListener(this)
+                block()
+            }
+        }
+    })
 }
