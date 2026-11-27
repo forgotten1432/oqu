@@ -1,3 +1,21 @@
+## ئوقۇ (Oqu) 0.4.1
+
+**Düzeltmeler**
+- Uzun EPUB kitaplar artık açılıyor. Kitabın tamamı tek bir dosyada olduğunda (özellikle dönüştürülmüş kitaplarda sık görülür) ekran uzun süre boş kalıyor ya da WebView kapanıyordu. Büyük bölümler artık arka planda küçük parçalara bölünüyor; her parça bir saniye içinde açılıyor.
+- Aynı düzeltme uzun Word (DOCX), ODT, FB2 ve HTML belgeleri için de geçerli.
+- İçindekiler ve kitap içi bağlantılar doğru parçaya gidiyor.
+- Not: Daha önce açılabilen ama çok büyük bölümleri olan kitaplarda kaldığın yer ve yer imleri biraz kayabilir.
+
+**Hangi APK'yı indirmeliyim?**
+- **`oqu-0.4.1-arm64-v8a.apk`** ⭐: çoğu telefon ve tablet, Android 17 dahil (önerilen)
+- `oqu-0.4.1-universal.apk`: emin değilsen; her cihazda çalışır ama daha büyük
+- `oqu-0.4.1-old-32bit-armeabi-v7a.apk`: yalnızca çok eski 32 bit telefonlar; yeni cihazlar bunu kurmaz
+- `oqu-0.4.1-x86_64.apk`: emülatör ve Chromebook
+
+0.3.1 veya üstü yüklüyse güncelleme uygulama içinden gelir.
+
+Android 8.0 veya üstü gerekir.
+
 ## ئوقۇ (Oqu) 0.4.0
 
 **Yeni: Cihazdaki belgeler**

@@ -1058,7 +1058,7 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if ((lib.uniffi_reader_core_checksum_method_reflowdoc_chapter() and 0xFFFF) != 34690) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if ((lib.uniffi_reader_core_checksum_method_reflowdoc_chapter_index() and 0xFFFF) != 51177) {
+    if ((lib.uniffi_reader_core_checksum_method_reflowdoc_chapter_index() and 0xFFFF) != 63332) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_reader_core_checksum_method_reflowdoc_chapter_text() and 0xFFFF) != 50437) {
@@ -2446,7 +2446,9 @@ public interface ReflowDocInterface {
     fun `chapter`(`index`: kotlin.UInt): Resource
     
     /**
-     * Index of the chapter served at `path`, if any.
+     * Index of the chapter served at `path`, if any. `path` may carry a
+     * `#fragment`: for a chapter split into parts it selects the part that
+     * holds that id (without one, the first part).
      */
     fun `chapterIndex`(`path`: kotlin.String): kotlin.UInt?
     
@@ -2597,7 +2599,9 @@ open class ReflowDoc: Disposable, AutoCloseable, ReflowDocInterface
 
     
     /**
-     * Index of the chapter served at `path`, if any.
+     * Index of the chapter served at `path`, if any. `path` may carry a
+     * `#fragment`: for a chapter split into parts it selects the part that
+     * holds that id (without one, the first part).
      */override fun `chapterIndex`(`path`: kotlin.String): kotlin.UInt? {
             return FfiConverterOptionalUInt.lift(
     callWithHandle {
