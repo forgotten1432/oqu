@@ -529,9 +529,10 @@ private fun BookReader(s: Session, onClose: () -> Unit, onTheme: (String) -> Uni
                         override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                             val u = request.url
                             if (u.host == HOST) {
-                                val idx = s.doc.chapterIndex((u.path ?: "").removePrefix("/"))
+                                val frag = u.fragment
+                                // The fragment picks the right part of a chapter that was split.
+                                val idx = s.doc.chapterIndex((u.path ?: "").removePrefix("/") + (frag?.let { "#$it" } ?: ""))
                                 if (idx != null) {
-                                    val frag = u.fragment
                                     if (idx.toInt() == s.chapter && frag != null) js("Reader.goAnchor(${JSONObject.quote(frag)})")
                                     else main.post { load(idx.toInt(), if (frag != null) Start.Anchor(frag) else Start.Fraction(0.0)) }
                                 }

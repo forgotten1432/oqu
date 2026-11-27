@@ -9,6 +9,7 @@ mod fb2;
 mod odt;
 mod sanitize;
 mod simple;
+mod split;
 
 use crate::rtl::{self, TextDirection};
 use crate::util;
@@ -105,6 +106,19 @@ impl Store {
         }
     }
 
+    /// Uncompressed size, if known without reading the entry.
+    fn size(&self, path: &str) -> Option<u64> {
+        match self {
+            Store::Zip(z) => {
+                let mut g = z.lock().ok()?;
+                let f = g.by_name(path).ok()?;
+                Some(f.size())
+            }
+            Store::Memory(m) => m.get(path).map(|(_, d)| d.len() as u64),
+            Store::Dir(root) => std::fs::metadata(root.join(util::normalize(path))).ok().map(|m| m.len()),
+        }
+    }
+
     fn mime(&self, path: &str) -> String {
         match self {
             Store::Memory(m) => m.get(path).map(|(t, _)| t.clone()).unwrap_or_else(|| util::mime_for(path).into()),
@@ -138,6 +152,8 @@ pub struct ReflowDoc {
     format: DocFormat,
     direction: TextDirection,
     profile: rtl::FoldProfile,
+    /// Chapters split into parts (see `split`): original path → parts.
+    parts: split::PartMap,
     text_cache: Mutex<HashMap<(u32, bool), Arc<FoldedText>>>,
 }
 
@@ -167,6 +183,9 @@ impl ReflowDoc {
         if book.chapters.is_empty() {
             return Err(ReaderError::Parse { msg: "document has no readable content".into() });
         }
+        // Huge chapters (a whole book in one file) are served in parts so the
+        // WebView never has to lay out megabytes of text at once.
+        let parts = split::split_book(&mut book, raw_of);
         if book.title.trim().is_empty() {
             book.title = std::path::Path::new(&path)
                 .file_stem()
@@ -201,7 +220,7 @@ impl ReflowDoc {
             None if book.language.as_deref().map(rtl::is_rtl_lang).unwrap_or(false) => TextDirection::Rtl,
             None => rtl::dominant(&sample),
         };
-        Ok(Arc::new(ReflowDoc { book, format, direction, profile, text_cache: Mutex::new(HashMap::new()) }))
+        Ok(Arc::new(ReflowDoc { book, format, direction, profile, parts, text_cache: Mutex::new(HashMap::new()) }))
     }
 
     pub fn info(&self) -> BookInfo {
@@ -223,9 +242,19 @@ impl ReflowDoc {
         }
     }
 
-    /// Index of the chapter served at `path`, if any.
+    /// Index of the chapter served at `path`, if any. `path` may carry a
+    /// `#fragment`: for a chapter split into parts it selects the part that
+    /// holds that id (without one, the first part).
     pub fn chapter_index(&self, path: String) -> Option<u32> {
-        let p = util::normalize(&util::percent_decode(path.split('#').next().unwrap_or("")));
+        let (p, frag) = match path.split_once('#') {
+            Some((p, f)) => (p, Some(f)),
+            None => (path.as_str(), None),
+        };
+        let p = util::normalize(&util::percent_decode(p));
+        if let Some(parts) = self.parts.get(&p) {
+            let frag = frag.map(util::percent_decode).filter(|f| !f.is_empty());
+            return frag.and_then(|f| split::find_part(&self.parts, &p, &f)).or(parts.first().map(|(i, _)| *i));
+        }
         self.book.chapters.iter().position(|c| c.path == p).map(|i| i as u32)
     }
 
@@ -308,11 +337,14 @@ impl ReflowDoc {
 }
 
 fn raw_chapter(book: &Book, i: usize) -> Option<String> {
-    let ch = book.chapters.get(i)?;
+    raw_of(&book.store, book.chapters.get(i)?)
+}
+
+fn raw_of(store: &Store, ch: &Chapter) -> Option<String> {
     if let Some(h) = &ch.html {
         return Some(h.clone());
     }
-    let bytes = book.store.get(&ch.path)?;
+    let bytes = store.get(&ch.path)?;
     Some(util::decode_text(&bytes, sanitize::declared_charset(&bytes).as_deref()))
 }
 
